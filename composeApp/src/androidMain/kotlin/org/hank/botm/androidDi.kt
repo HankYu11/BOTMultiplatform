@@ -14,11 +14,3 @@ actual fun platformModule(): Module = module {
         getAppDatabase(builder)
     }
 }
-
-actual val client: HttpClient
-    get() = HttpClient(OkHttp) {
-        defaultRequest {
-            header("Content-Type", "application/json")
-            url("https://api.openai.com/v1/")
-        }
-    }

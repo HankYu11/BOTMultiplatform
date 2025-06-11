@@ -11,7 +11,3 @@ actual fun platformModule(): Module = module {
         getAppDatabase(builder)
     }
 }
-
-actual val client: HttpClient
-    get() = HttpClient() {
-    }

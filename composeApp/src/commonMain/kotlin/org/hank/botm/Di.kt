@@ -77,4 +77,3 @@ private fun dispatcherModule(): Module = module {
 }
 
 expect fun platformModule(): Module
-expect val client: HttpClient
