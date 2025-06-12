@@ -1,8 +1,10 @@
 package org.hank.botm.data.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.example.bigoldtwo.data.database.AppDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.dao.GameDao
@@ -17,9 +19,11 @@ import org.hank.botm.domain.model.toDto
 interface GameRepository {
     val game: Flow<Game?>
     suspend fun createGame(createGame: CreateGame)
+    suspend fun clearGame()
 }
 
 class GameRepositoryImpl (
+    private val appDatabase: AppDatabase,
     private val gameDao: GameDao,
     private val playerDao: PlayerDao,
     private val gameApi: GameApi,
@@ -31,8 +35,18 @@ class GameRepositoryImpl (
     override suspend fun createGame(createGame: CreateGame) {
         withContext(ioDispatcher) {
             val gameWithPlayers = gameApi.createGame(createGame.toDto())
-            gameDao.insertGame(gameWithPlayers.game.toEntity())
-            playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+            appDatabase.useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    gameDao.insertGame(gameWithPlayers.game.toEntity())
+                    playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+                }
+            }
+        }
+    }
+
+    override suspend fun clearGame() {
+        withContext(ioDispatcher) {
+            gameDao.clearGame()
         }
     }
 }

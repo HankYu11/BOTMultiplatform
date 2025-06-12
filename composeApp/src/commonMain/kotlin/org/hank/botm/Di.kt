@@ -49,6 +49,7 @@ fun commonModule(): Module = module {
 }
 
 private fun daoModule(): Module = module {
+    single<AppDatabase> { get<AppDatabase>() }
     single<GameDao> { get<AppDatabase>().getGameDao() }
     single<PlayerDao> { get<AppDatabase>().getPlayerDao() }
     single<ResultDao> { get<AppDatabase>().getResultDao() }
@@ -56,7 +57,7 @@ private fun daoModule(): Module = module {
 }
 
 private fun repositoryModule(): Module = module {
-    single<GameRepository> { GameRepositoryImpl(get(), get(), get(), get(named("IoDispatcher"))) }
+    single<GameRepository> { GameRepositoryImpl(get(), get(), get(), get(), get(named("IoDispatcher"))) }
     single<PlayerRepository> { PlayerRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<ResultRepository> { ResultRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(named("IoDispatcher"))) }
@@ -70,7 +71,7 @@ private fun usecaseModule(): Module = module {
 
 private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
 }
 
