@@ -12,8 +12,6 @@ import org.hank.botm.ui.model.PlayerResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.hank.botm.data.network.api.GameApi
-import org.hank.botm.data.network.api.RoundApi
 import org.hank.botm.ui.Game
 
 class HomeViewModel(
@@ -21,8 +19,6 @@ class HomeViewModel(
     private val insertResultsUseCase: InsertResultsUseCase,
     getGameResultDataUseCase: GetGameResultDataUseCase,
     private val gameRepository: GameRepository,
-    private val gameApi: GameApi,
-    private val roundAPi: RoundApi,
 ) : ViewModel() {
     private val gameId = savedStateHandle.toRoute<Game>().gameId
 
@@ -34,22 +30,10 @@ class HomeViewModel(
     private val _shouldNavToSetup = MutableStateFlow(false)
     val shouldNavToSetup = _shouldNavToSetup.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            println(gameApi.getGame(1))
-        }
-    }
-
     fun submitResults(playerResults: List<PlayerResult>) {
         if (playerResults.size != 4) throw Exception("The gameResult list size should be 4 but was ${playerResults.size}")
 
         viewModelScope.launch {
-            roundAPi.createRound(
-                gameId = gameId,
-                bet.value,
-                convertToResult(playerResults, bet.value),
-            )
-
             insertResultsUseCase(
                 bet.value,
                 convertToResult(playerResults, bet.value),
@@ -63,8 +47,10 @@ class HomeViewModel(
     }
 
     fun startNewGame() {
-        // nav to setupScreen
-        _shouldNavToSetup.value = true
+        viewModelScope.launch {
+            gameRepository.clearGame()
+            _shouldNavToSetup.value = true
+        }
     }
 
     fun finishNav() {

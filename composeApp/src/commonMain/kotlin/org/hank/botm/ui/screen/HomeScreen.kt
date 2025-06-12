@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,9 +36,11 @@ fun HomeScreen(
     val shouldNavToSetup by homeViewModel.shouldNavToSetup.collectAsState()
     val gameResultData by homeViewModel.gameResult.collectAsState(null)
 
-    if (shouldNavToSetup) {
-        navToSetup()
-        homeViewModel.finishNav()
+    LaunchedEffect(shouldNavToSetup) {
+        if (shouldNavToSetup) {
+            navToSetup()
+            homeViewModel.finishNav()
+        }
     }
 
     HomeScreen(
