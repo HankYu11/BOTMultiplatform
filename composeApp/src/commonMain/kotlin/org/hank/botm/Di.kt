@@ -8,6 +8,8 @@ import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
 import org.hank.botm.data.database.dao.RoundDao
+import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.createHttpClient
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.PlayerRepository
@@ -24,7 +26,6 @@ import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.KoinAppDeclaration
@@ -42,7 +43,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
 fun initKoinIos() = initKoin(appDeclaration = {})
 
 fun commonModule(): Module = module {
-    includes(daoModule(), repositoryModule(), dispatcherModule(), usecaseModule(), viewModelModule())
+    includes(daoModule(), repositoryModule(), dispatcherModule(), usecaseModule(), viewModelModule(), networkModule(),)
 }
 
 private fun daoModule(): Module = module {
@@ -67,13 +68,18 @@ private fun usecaseModule(): Module = module {
 
 private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
-    viewModel { SetupViewModel(get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SetupViewModel(get(), get(), get()) }
 }
 
 private fun dispatcherModule(): Module = module {
     single(named("IoDispatcher")) { Dispatchers.IO }
     single(named("MainDispatcher")) { Dispatchers.Main }
+}
+
+private fun networkModule(): Module = module {
+    single<HttpClient> { createHttpClient() }
+    single<GameApi> { GameApi(get()) }
 }
 
 expect fun platformModule(): Module
