@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateRoundRequest(
+data class CreateRoundDto(
     val gameId: Int,
     val bet: Int,
     @SerialName("results")

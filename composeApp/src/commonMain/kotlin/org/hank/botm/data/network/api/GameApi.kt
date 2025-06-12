@@ -7,10 +7,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import org.hank.botm.data.network.model.CreateGameDto
 import org.hank.botm.data.network.model.GameDetailsDto
-import org.hank.botm.data.network.model.GameWithPlayers
+import org.hank.botm.data.network.model.GameWithPlayersDto
 
 interface GameApi {
-    suspend fun createGame(createGameDto: CreateGameDto): GameWithPlayers
+    suspend fun createGame(createGameDto: CreateGameDto): GameWithPlayersDto
     suspend fun getGame(id: Int): GameDetailsDto
 }
 
@@ -18,7 +18,7 @@ class GameApiImpl(
     private val httpClient: HttpClient,
 ) : GameApi{
 
-    override suspend fun createGame(createGameDto: CreateGameDto): GameWithPlayers {
+    override suspend fun createGame(createGameDto: CreateGameDto): GameWithPlayersDto {
         return httpClient.post("game/create") {
             setBody(createGameDto)
         }.body()
