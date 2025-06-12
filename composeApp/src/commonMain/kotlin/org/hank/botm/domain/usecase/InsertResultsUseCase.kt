@@ -9,7 +9,7 @@ class InsertResultsUseCase (
     private val playerRepository: PlayerRepository,
     private val roundRepository: RoundRepository,
 ) {
-    suspend operator fun invoke(bet: Int, results: List<Result>, gameId: Long) {
+    suspend operator fun invoke(bet: Int, results: List<Result>, gameId: Int) {
         if (results.size != 4) throw Exception("The Result list size should be 4 but was ${results.size}")
 
         val players = results

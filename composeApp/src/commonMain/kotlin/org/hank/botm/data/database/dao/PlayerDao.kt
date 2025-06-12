@@ -13,17 +13,17 @@ interface PlayerDao {
     fun getAllPlayers(): Flow<List<PlayerEntity>>
 
     @Query("SELECT * FROM player WHERE gameId = :gameId")
-    fun getPlayersByGame(gameId: Long): Flow<List<PlayerEntity>>
+    fun getPlayersByGame(gameId: Int): Flow<List<PlayerEntity>>
 
     @Query("SELECT * FROM player " +
             "WHERE gameId = (select MAX(gameId) FROM player)")
     fun getCurrentGamePlayers(): Flow<List<PlayerEntity>>
 
     @Query("SELECT * FROM player WHERE id = :id")
-    suspend fun getPlayer(id: Long): PlayerEntity
+    suspend fun getPlayer(id: Int): PlayerEntity
 
     @Query("UPDATE player SET balance = balance + :profit WHERE id = :playerId")
-    suspend fun updatePlayerBalance(playerId: Long, profit: Int)
+    suspend fun updatePlayerBalance(playerId: Int, profit: Int)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayers(players: List<PlayerEntity>)

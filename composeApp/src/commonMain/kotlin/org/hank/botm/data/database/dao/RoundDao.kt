@@ -21,7 +21,7 @@ interface RoundDao {
             ORDER BY round.id DESC 
         """
     )
-    fun getAllNewestGameRoundWithResults(gameId: Long): Flow<List<RoundWithResults>>
+    fun getAllNewestGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>>
 
     @Transaction
     suspend fun insertRoundWithRelations(
@@ -36,7 +36,8 @@ interface RoundDao {
             // update players
             playerDao.updatePlayerBalance(result.playerId, result.profit)
             // add roundId to results
-            result.copy(roundId = roundId)
+            //FIXME("id should be Int to follow backend")
+            result.copy(roundId = roundId.toInt())
         }
         resultDao.insertResults(resultsWithRoundId)
     }

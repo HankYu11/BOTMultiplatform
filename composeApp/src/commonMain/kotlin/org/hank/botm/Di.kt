@@ -9,6 +9,7 @@ import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
 import org.hank.botm.data.database.dao.RoundDao
 import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.api.GameApiImpl
 import org.hank.botm.data.network.api.RoundApi
 import org.hank.botm.data.network.createHttpClient
 import org.hank.botm.data.repository.GameRepository
@@ -55,7 +56,7 @@ private fun daoModule(): Module = module {
 }
 
 private fun repositoryModule(): Module = module {
-    single<GameRepository> { GameRepositoryImpl(get(), get(named("IoDispatcher"))) }
+    single<GameRepository> { GameRepositoryImpl(get(), get(), get(), get(named("IoDispatcher"))) }
     single<PlayerRepository> { PlayerRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<ResultRepository> { ResultRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(named("IoDispatcher"))) }
@@ -70,7 +71,7 @@ private fun usecaseModule(): Module = module {
 private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
     viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { SetupViewModel(get(), get(), get()) }
+    viewModel { SetupViewModel(get()) }
 }
 
 private fun dispatcherModule(): Module = module {
@@ -80,7 +81,7 @@ private fun dispatcherModule(): Module = module {
 
 private fun networkModule(): Module = module {
     single<HttpClient> { createHttpClient() }
-    single<GameApi> { GameApi(get()) }
+    single<GameApi> { GameApiImpl(get()) }
     single<RoundApi> { RoundApi(get()) }
 }
 

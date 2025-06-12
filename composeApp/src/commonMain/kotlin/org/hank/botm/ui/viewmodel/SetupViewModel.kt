@@ -8,37 +8,32 @@ import org.hank.botm.domain.model.Game
 import org.hank.botm.domain.model.Player
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.model.CreateGameDto
+import org.hank.botm.domain.model.CreateGame
+import org.hank.botm.domain.model.isValid
 
-class SetupViewModel (
-    private val playerRepository: PlayerRepository,
+class SetupViewModel(
     private val gameRepository: GameRepository,
 ) : ViewModel() {
 
     private val _alertMessage = MutableStateFlow("")
     val alertMessage = _alertMessage.asStateFlow()
 
-    private val _gameId = MutableStateFlow(0L)
-    val gameId = _gameId.asStateFlow()
+    val gameId = gameRepository.game.map { it?.id }
 
     fun createGame(
-        playerNames: List<String>
+        createGame: CreateGame
     ) {
-        if (playerNames.any { it.isEmpty() }) {
-            _alertMessage.value = "Please enter name for all players"
-        } else {
+        if (createGame.isValid()) {
             viewModelScope.launch {
-                val gameId = gameRepository.insertGame(Game())
-                playerNames.map { Player(name = it, gameId = gameId) }.forEach {
-                    playerRepository.insertPlayer(it)
-                }
-                _gameId.value = gameId
+                gameRepository.createGame(createGame)
             }
+        } else {
+            _alertMessage.value = "Please enter name for all players"
         }
-    }
-
-    fun finishNav() {
-        _gameId.value = 0
     }
 
     fun dismissAlert() {

@@ -20,7 +20,7 @@ data object Setup: Screen
 
 @Serializable
 data class Game(
-    val gameId: Long
+    val gameId: Int
 ): Screen
 
 @Composable

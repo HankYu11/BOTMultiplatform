@@ -4,19 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import org.hank.botm.data.database.model.GameEntity
 
 @Dao
 interface GameDao {
-    @Query("SELECT * FROM game WHERE id = :id")
-    suspend fun fetchGame(id: Long): GameEntity
+    @Query("SELECT * FROM game ORDER BY id DESC LIMIT 1")
+    fun getNewestGame(): Flow<GameEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertGame(gameEntity: GameEntity): Long
-
-    @Query("SELECT * FROM game WHERE isFinished = 0")
-    suspend fun fetchUnFinishedGame(): GameEntity?
-
-    @Query("UPDATE game SET isFinished = 1 WHERE id = :gameId")
-    suspend fun finishedGame(gameId: Long)
+    suspend fun insertGame(gameEntity: GameEntity)
 }

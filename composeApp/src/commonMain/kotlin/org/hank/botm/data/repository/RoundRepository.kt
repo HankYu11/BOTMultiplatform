@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 
 interface RoundRepository {
     suspend fun insertRound(round: Round, results: List<Result>, players: List<Player>)
-    fun getGameRoundWithResults(gameId: Long): Flow<List<RoundWithResults>>
+    fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>>
 }
 
 class RoundRepositoryImpl (
@@ -38,7 +38,7 @@ class RoundRepositoryImpl (
         )
     }
 
-    override fun getGameRoundWithResults(gameId: Long): Flow<List<RoundWithResults>> {
+    override fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>> {
         return roundDao.getAllNewestGameRoundWithResults(gameId)
     }
 }

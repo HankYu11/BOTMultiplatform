@@ -10,7 +10,7 @@ class GetGameResultDataUseCase (
     private val getRoundResultUseCase: GetRoundResultUseCase,
 ) {
     operator fun invoke(
-        gameId: Long,
+        gameId: Int,
     ) : Flow<GameResult> {
         val playersFlow = playerRepository.getCurrentGamePlayers()
         val roundResultsFlow = getRoundResultUseCase(gameId)

@@ -23,10 +23,10 @@ import org.hank.botm.domain.model.Result
     ],
 )
 data class ResultEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val roundId: Long,
-    val playerId: Long,
+    @PrimaryKey
+    val id: Int = 0,
+    val roundId: Int,
+    val playerId: Int,
     val profit: Int,
 )
 

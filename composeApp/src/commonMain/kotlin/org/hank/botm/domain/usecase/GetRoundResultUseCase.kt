@@ -10,7 +10,7 @@ class GetRoundResultUseCase (
     private val roundRepository: RoundRepository,
 ) {
     operator fun invoke(
-        gameId: Long
+        gameId: Int
     ): Flow<List<RoundResult>> {
         return roundRepository.getGameRoundWithResults(gameId)
             .map { listOfRoundWithResults ->

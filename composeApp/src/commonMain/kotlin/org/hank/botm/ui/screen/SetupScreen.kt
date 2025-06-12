@@ -18,30 +18,36 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.hank.botm.domain.model.CreateGame
+import org.hank.botm.domain.model.getNameByIndex
+import org.hank.botm.domain.model.withNameChanged
 import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SetupScreen(
-    navToGame: (gameId: Long) -> Unit,
+    navToGame: (gameId: Int) -> Unit,
     modifier: Modifier = Modifier,
     setupViewModel: SetupViewModel = koinViewModel(),
 ) {
-    val gameId by setupViewModel.gameId.collectAsState()
+    val gameId by setupViewModel.gameId.collectAsState(null)
     val alertMessage by setupViewModel.alertMessage.collectAsState()
 
+    LaunchedEffect(gameId) {
+        gameId?.let(navToGame)
+    }
+
     SetupScreen(
-        gameId,
-        navToGame,
-        setupViewModel::finishNav,
         setupViewModel::createGame,
         alertMessage,
         setupViewModel::dismissAlert,
@@ -51,21 +57,13 @@ fun SetupScreen(
 
 @Composable
 fun SetupScreen(
-    gameId: Long,
-    navToGame: (gameId: Long) -> Unit,
-    finishNav: () -> Unit,
-    createGame: (List<String>) -> Unit,
+    createGame: (CreateGame) -> Unit,
     alertMessage: String,
     dismissAlert: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val names = remember {
-        mutableStateListOf("", "", "", "")
-    }
-
-    if (gameId != 0L) {
-        navToGame(gameId)
-        finishNav()
+    var players by remember {
+        mutableStateOf(CreateGame())
     }
 
     Column(
@@ -78,9 +76,9 @@ fun SetupScreen(
             items(4) {
                 PlayerSetupView(
                     index = it,
-                    name = names[it],
+                    name = players.getNameByIndex(it),
                     onNameChange = { index, name ->
-                        names[index] = name
+                        players = players.withNameChanged(index, name)
                     }
                 )
             }
@@ -90,7 +88,7 @@ fun SetupScreen(
 
         Button(
             onClick = {
-                createGame(names)
+                createGame(players)
             },
         ) {
             Text(text = "Start Game")
@@ -150,10 +148,7 @@ fun PlayerSetupView(
 @Composable
 fun SetupScreenPreview() {
     SetupScreen(
-        0L,
         {},
-        {},
-        { _ -> },
         "",
         {},
         modifier = Modifier.fillMaxSize()

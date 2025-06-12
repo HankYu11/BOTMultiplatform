@@ -1,37 +1,38 @@
 package org.hank.botm.data.repository
 
-import org.hank.botm.data.database.dao.GameDao
-import org.hank.botm.data.database.model.asDomain
-import org.hank.botm.domain.model.Game
-import org.hank.botm.domain.model.asEntity
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.hank.botm.data.database.dao.GameDao
+import org.hank.botm.data.database.dao.PlayerDao
+import org.hank.botm.data.database.model.asDomain
+import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.model.toEntity
+import org.hank.botm.domain.model.CreateGame
+import org.hank.botm.domain.model.Game
+import org.hank.botm.domain.model.toDto
 
 interface GameRepository {
-    suspend fun fetchExistingGame(): Game?
-    suspend fun fetchGame(gameId: Long): Game
-    suspend fun insertGame(game: Game): Long
-    suspend fun finishGame(gameId: Long)
+    val game: Flow<Game?>
+    suspend fun createGame(createGame: CreateGame)
 }
 
 class GameRepositoryImpl (
     private val gameDao: GameDao,
-    private val ioDispatcher: CoroutineDispatcher
+    private val playerDao: PlayerDao,
+    private val gameApi: GameApi,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : GameRepository {
-    override suspend fun fetchExistingGame(): Game? = withContext(ioDispatcher) {
-        gameDao.fetchUnFinishedGame()?.asDomain()
-    }
+    override val game: Flow<Game?> = gameDao.getNewestGame()
+        .map { it?.asDomain() }
 
-    override suspend fun fetchGame(gameId: Long): Game = withContext(ioDispatcher) {
-        gameDao.fetchGame(gameId).asDomain()
+    override suspend fun createGame(createGame: CreateGame) {
+        withContext(ioDispatcher) {
+            val gameWithPlayers = gameApi.createGame(createGame.toDto())
+            gameDao.insertGame(gameWithPlayers.game.toEntity())
+            playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+        }
     }
-
-    override suspend fun insertGame(game: Game) = withContext(ioDispatcher) {
-        gameDao.insertGame(game.asEntity())
-    }
-
-    override suspend fun finishGame(gameId: Long) = withContext(ioDispatcher) {
-        gameDao.finishedGame(gameId = gameId)
-    }
-
 }

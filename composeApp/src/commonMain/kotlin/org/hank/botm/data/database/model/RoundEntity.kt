@@ -16,9 +16,9 @@ import org.hank.botm.domain.model.Round
 )
 data class RoundEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    val id: Int = 0,
     val bet: Int = 1,
-    val gameId: Long,
+    val gameId: Int,
 )
 
 fun RoundEntity.asDomain() = Round(id, bet, gameId)

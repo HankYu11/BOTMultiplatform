@@ -148,10 +148,10 @@ private fun List<PlayerResult>.hasValidWinnersAndLosers(): Boolean {
 @Composable
 fun GameWinDialogPreview() {
     val players = listOf(
-        Player(gameId = 0L, balance = 10, name = "Hank"),
-        Player(gameId = 0L, balance = 10, name = "Steven"),
-        Player(gameId = 0L, balance = 10, name = "Hanna"),
-        Player(gameId = 0L, balance = 10, name = "Cindy"),
+        Player(gameId = 0, balance = 10, name = "Hank"),
+        Player(gameId = 0, balance = 10, name = "Steven"),
+        Player(gameId = 0, balance = 10, name = "Hanna"),
+        Player(gameId = 0, balance = 10, name = "Cindy"),
     )
     GameWinDialog(
         players = players,

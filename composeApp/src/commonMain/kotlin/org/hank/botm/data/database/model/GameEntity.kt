@@ -6,9 +6,8 @@ import org.hank.botm.domain.model.Game
 
 @Entity(tableName = "game")
 data class GameEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val isFinished: Boolean = false,
+    @PrimaryKey
+    val id: Int = 0,
 )
 
 fun GameEntity.asDomain() = Game(id)

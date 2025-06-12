@@ -19,16 +19,16 @@ import org.hank.botm.domain.model.Player
     indices = [Index(value = ["gameId"])]
 )
 data class PlayerEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long,
-    val gameId: Long,
+    @PrimaryKey
+    val id: Int,
     val name: String,
     val balance: Int,
+    val gameId: Int,
 )
 
 fun PlayerEntity.asDomain() = Player(
     id = id,
-    gameId = gameId,
     name = name,
     balance = balance,
+    gameId = gameId,
 )

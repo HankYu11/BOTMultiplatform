@@ -36,10 +36,10 @@ fun App() {
                 )
             }
         ) { innerPadding ->
-            if (startDestination != null) {
+            startDestination?.let { destination ->
                 BigOldTwoNavHost(
                     navController = navController,
-                    startDestination = startDestination!!,
+                    startDestination = destination,
                     innerPadding = innerPadding
                 )
             }
