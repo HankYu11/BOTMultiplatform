@@ -9,6 +9,7 @@ import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
 import org.hank.botm.data.database.dao.RoundDao
 import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.api.RoundApi
 import org.hank.botm.data.network.createHttpClient
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
@@ -68,7 +69,7 @@ private fun usecaseModule(): Module = module {
 
 private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { SetupViewModel(get(), get(), get()) }
 }
 
@@ -80,6 +81,7 @@ private fun dispatcherModule(): Module = module {
 private fun networkModule(): Module = module {
     single<HttpClient> { createHttpClient() }
     single<GameApi> { GameApi(get()) }
+    single<RoundApi> { RoundApi(get()) }
 }
 
 expect fun platformModule(): Module
