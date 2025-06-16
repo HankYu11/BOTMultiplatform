@@ -19,7 +19,6 @@ fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() 
         logger = object: Logger {
             override fun log(message: String) {
                 // TODO("use Timber")
-                println("KtorClient: $message")
             }
         }
     }
