@@ -11,6 +11,7 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import org.hank.botm.Config
 
 fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() {
     install(Logging) {
@@ -25,7 +26,7 @@ fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() 
 
     defaultRequest {
         header("Content-Type", "application/json")
-        url("https://botktor-production.up.railway.app/")
+        url(Config.baseUrl)
     }
 
     install(ContentNegotiation) {

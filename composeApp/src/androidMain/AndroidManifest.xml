@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
 
+<!--    Add it to application block for local development-->
+    <!--        android:usesCleartextTraffic="true"-->
     <application
         android:name=".BOTApplication"
         android:allowBackup="true"
