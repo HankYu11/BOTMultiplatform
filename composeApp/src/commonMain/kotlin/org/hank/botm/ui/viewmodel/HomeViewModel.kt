@@ -7,7 +7,6 @@ import androidx.navigation.toRoute
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.domain.usecase.InsertResultsUseCase
 import org.hank.botm.domain.model.Result
-import org.hank.botm.domain.usecase.GetGameResultDataUseCase
 import org.hank.botm.ui.model.PlayerResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,12 +16,11 @@ import org.hank.botm.ui.Game
 class HomeViewModel(
     savedStateHandle: SavedStateHandle,
     private val insertResultsUseCase: InsertResultsUseCase,
-    getGameResultDataUseCase: GetGameResultDataUseCase,
     private val gameRepository: GameRepository,
 ) : ViewModel() {
     private val gameId = savedStateHandle.toRoute<Game>().gameId
 
-    val gameResult = getGameResultDataUseCase(gameId)
+    val gameWithDetails = gameRepository.gameWithDetails
 
     private val _bet = MutableStateFlow(1)
     val bet = _bet.asStateFlow()

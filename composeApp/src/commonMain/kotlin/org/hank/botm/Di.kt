@@ -20,8 +20,6 @@ import org.hank.botm.data.repository.ResultRepository
 import org.hank.botm.data.repository.ResultRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
-import org.hank.botm.domain.usecase.GetGameResultDataUseCase
-import org.hank.botm.domain.usecase.GetRoundResultUseCase
 import org.hank.botm.domain.usecase.InsertResultsUseCase
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
@@ -64,14 +62,12 @@ private fun repositoryModule(): Module = module {
 }
 
 private fun usecaseModule(): Module = module {
-    factoryOf(::GetGameResultDataUseCase)
-    factoryOf(::GetRoundResultUseCase)
     factoryOf(::InsertResultsUseCase)
 }
 
 private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
 }
 

@@ -8,7 +8,7 @@ import androidx.room.Transaction
 import org.hank.botm.data.database.model.PlayerEntity
 import org.hank.botm.data.database.model.ResultEntity
 import org.hank.botm.data.database.model.RoundEntity
-import org.hank.botm.data.database.model.RoundWithResults
+import org.hank.botm.data.database.model.RoundWithResultsEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,7 +21,7 @@ interface RoundDao {
             ORDER BY round.id DESC 
         """
     )
-    fun getAllNewestGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>>
+    fun getAllNewestGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>>
 
     @Transaction
     suspend fun insertRoundWithRelations(

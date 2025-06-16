@@ -3,7 +3,7 @@ package org.hank.botm.data.repository
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
 import org.hank.botm.data.database.dao.RoundDao
-import org.hank.botm.data.database.model.RoundWithResults
+import org.hank.botm.data.database.model.RoundWithResultsEntity
 import org.hank.botm.domain.model.Player
 import org.hank.botm.domain.model.Result
 import org.hank.botm.domain.model.Round
@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 
 interface RoundRepository {
     suspend fun insertRound(round: Round, results: List<Result>, players: List<Player>)
-    fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>>
+    fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>>
 }
 
 class RoundRepositoryImpl (
@@ -38,7 +38,7 @@ class RoundRepositoryImpl (
         )
     }
 
-    override fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResults>> {
+    override fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>> {
         return roundDao.getAllNewestGameRoundWithResults(gameId)
     }
 }

@@ -9,20 +9,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
+import org.hank.botm.data.database.model.GameWithDetailsEntity
 import org.hank.botm.data.database.model.asDomain
 import org.hank.botm.data.network.api.GameApi
 import org.hank.botm.data.network.model.toEntity
 import org.hank.botm.domain.model.CreateGame
 import org.hank.botm.domain.model.Game
+import org.hank.botm.domain.model.GameWithDetails
 import org.hank.botm.domain.model.toDto
 
 interface GameRepository {
     val game: Flow<Game?>
+    val gameWithDetails: Flow<GameWithDetails>
     suspend fun createGame(createGame: CreateGame)
     suspend fun clearGame()
 }
 
-class GameRepositoryImpl (
+class GameRepositoryImpl(
     private val appDatabase: AppDatabase,
     private val gameDao: GameDao,
     private val playerDao: PlayerDao,
@@ -31,6 +34,9 @@ class GameRepositoryImpl (
 ) : GameRepository {
     override val game: Flow<Game?> = gameDao.getNewestGame()
         .map { it?.asDomain() }
+
+    override val gameWithDetails: Flow<GameWithDetails> =
+        gameDao.getNewestGameWithDetails().map { it.asDomain() }
 
     override suspend fun createGame(createGame: CreateGame) {
         withContext(ioDispatcher) {

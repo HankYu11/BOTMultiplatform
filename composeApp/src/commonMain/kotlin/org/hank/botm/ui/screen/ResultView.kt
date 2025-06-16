@@ -19,8 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.hank.botm.domain.model.Player
 import org.hank.botm.domain.model.Result
-import org.hank.botm.ui.model.GameResult
-import org.hank.botm.ui.model.RoundResult
+import org.hank.botm.domain.model.Round
+import org.hank.botm.domain.model.RoundWithResults
 import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.absoluteValue
@@ -28,22 +28,21 @@ import kotlin.math.absoluteValue
 @Composable
 fun ResultView(
     modifier: Modifier = Modifier,
-    gameResult: GameResult?,
+    players: List<Player>,
+    roundsWithResults: List<RoundWithResults>,
 ) {
-    if (gameResult == null) return
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ResultTitle(
             modifier = Modifier.fillMaxWidth(),
-            playerNames = gameResult.players.map { it.name }
+            playerNames = players.map { it.name }
         )
 
         RoundView(
             modifier = Modifier.fillMaxWidth(),
-            roundResults = gameResult.players
+            roundResults = players
                 .sortedBy { it.id }
                 .map { it.balance },
             isBalance = true
@@ -53,7 +52,7 @@ fun ResultView(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(gameResult.roundResults) { roundResult ->
+            items(roundsWithResults) { roundResult ->
                 RoundView(
                     modifier = Modifier.fillMaxWidth(),
                     roundResults = roundResult.results
@@ -186,19 +185,15 @@ fun ResultScreenPreview() {
             profit = -5,
         ),
     )
-    val roundResults = listOf(
-        RoundResult(0, results),
-        RoundResult(1, results)
-    )
-    val gameResult = GameResult(
-        players = players,
-        roundResults = roundResults
+    val roundsWithResults = listOf(
+        RoundWithResults(Round(id = 0, gameId = 0, bet = 1), results)
     )
 
     BigOldTwoTheme {
         ResultView(
             modifier = Modifier.fillMaxSize(),
-            gameResult = gameResult
+            players = players,
+            roundsWithResults = roundsWithResults,
         )
     }
 }

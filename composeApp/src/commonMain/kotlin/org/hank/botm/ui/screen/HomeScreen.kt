@@ -15,12 +15,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import org.hank.botm.domain.model.GameWithDetails
 import org.hank.botm.domain.model.Player
 import org.hank.botm.domain.model.Result
+import org.hank.botm.domain.model.Round
+import org.hank.botm.domain.model.RoundWithResults
 import org.hank.botm.ui.component.GameWinDialog
-import org.hank.botm.ui.model.GameResult
 import org.hank.botm.ui.model.PlayerResult
-import org.hank.botm.ui.model.RoundResult
 import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -34,7 +35,7 @@ fun HomeScreen(
 ) {
     val bet by homeViewModel.bet.collectAsState()
     val shouldNavToSetup by homeViewModel.shouldNavToSetup.collectAsState()
-    val gameResultData by homeViewModel.gameResult.collectAsState(null)
+    val gameWithDetails by homeViewModel.gameWithDetails.collectAsState(null)
 
     LaunchedEffect(shouldNavToSetup) {
         if (shouldNavToSetup) {
@@ -43,24 +44,26 @@ fun HomeScreen(
         }
     }
 
-    HomeScreen(
-        bet = bet,
-        gameResult = gameResultData,
-        startNewGame = { homeViewModel.startNewGame() },
-        updateBet = { newBet ->
-            homeViewModel.updateBet(newBet)
-        },
-        updateGame = { gameResults ->
-            homeViewModel.submitResults(gameResults)
-        },
-        modifier = modifier,
-    )
+    gameWithDetails?.let {
+        HomeScreen(
+            bet = bet,
+            gameWithDetails = it,
+            startNewGame = { homeViewModel.startNewGame() },
+            updateBet = { newBet ->
+                homeViewModel.updateBet(newBet)
+            },
+            updateGame = { gameResults ->
+                homeViewModel.submitResults(gameResults)
+            },
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
 fun HomeScreen(
     bet: Int,
-    gameResult: GameResult?,
+    gameWithDetails: GameWithDetails,
     startNewGame: () -> Unit,
     updateBet: (Int) -> Unit,
     updateGame: (List<PlayerResult>) -> Unit,
@@ -76,7 +79,8 @@ fun HomeScreen(
     ) {
         ResultView(
             modifier = Modifier.weight(1f),
-            gameResult = gameResult
+            players = gameWithDetails.players,
+            roundsWithResults = gameWithDetails.roundsWithResults
         )
 
         Row(
@@ -97,7 +101,7 @@ fun HomeScreen(
 
         if (showDialog) {
             GameWinDialog(
-                players = gameResult?.players ?: emptyList(),
+                players = gameWithDetails?.players ?: emptyList(),
                 bet = bet,
                 updateBet = updateBet,
                 submitRound = { gameResults ->
@@ -157,19 +161,21 @@ fun HomeScreenPreview() {
             profit = -5,
         ),
     )
-    val roundResults = listOf(
-        RoundResult(0, results),
-        RoundResult(1, results)
+
+    val roundsWithResults = listOf(
+        RoundWithResults(Round(id = 0, gameId = 0, bet = 1), results)
     )
-    val gameResult = GameResult(
+
+    val gameWithDetails = GameWithDetails(
+        gameId = 0,
         players = players,
-        roundResults = roundResults
+        roundsWithResults = roundsWithResults
     )
 
     BigOldTwoTheme {
         HomeScreen(
             bet = 1,
-            gameResult = gameResult,
+            gameWithDetails = gameWithDetails,
             {},
             {},
             { _ -> },
