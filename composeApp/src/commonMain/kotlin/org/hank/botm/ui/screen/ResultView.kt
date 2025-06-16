@@ -52,6 +52,7 @@ fun ResultView(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            println("roundWithResults: $roundsWithResults")
             items(roundsWithResults) { roundResult ->
                 RoundView(
                     modifier = Modifier.fillMaxWidth(),
@@ -110,6 +111,7 @@ fun RoundView(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
+        println("roundResults: $roundResults")
         roundResults
             .forEach { result ->
                 Box(

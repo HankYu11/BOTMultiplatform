@@ -20,7 +20,6 @@ import org.hank.botm.data.repository.ResultRepository
 import org.hank.botm.data.repository.ResultRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
-import org.hank.botm.domain.usecase.InsertResultsUseCase
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.koin.core.context.startKoin
@@ -43,7 +42,13 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
 fun initKoinIos() = initKoin(appDeclaration = {})
 
 fun commonModule(): Module = module {
-    includes(daoModule(), repositoryModule(), dispatcherModule(), usecaseModule(), viewModelModule(), networkModule(),)
+    includes(
+        daoModule(),
+        repositoryModule(),
+        dispatcherModule(),
+        viewModelModule(),
+        networkModule(),
+    )
 }
 
 private fun daoModule(): Module = module {
@@ -55,14 +60,15 @@ private fun daoModule(): Module = module {
 }
 
 private fun repositoryModule(): Module = module {
-    single<GameRepository> { GameRepositoryImpl(get(), get(), get(), get(), get(named("IoDispatcher"))) }
+    single<GameRepository> {
+        GameRepositoryImpl(
+            get(), get(), get(), get(), get(), get(),
+            get(named("IoDispatcher"))
+        )
+    }
     single<PlayerRepository> { PlayerRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<ResultRepository> { ResultRepositoryImpl(get(), get(named("IoDispatcher"))) }
-    single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(named("IoDispatcher"))) }
-}
-
-private fun usecaseModule(): Module = module {
-    factoryOf(::InsertResultsUseCase)
+    single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(), get(), get(named("IoDispatcher"))) }
 }
 
 private fun viewModelModule(): Module = module {

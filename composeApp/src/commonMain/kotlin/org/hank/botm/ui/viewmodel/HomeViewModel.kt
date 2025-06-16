@@ -5,18 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import org.hank.botm.data.repository.GameRepository
-import org.hank.botm.domain.usecase.InsertResultsUseCase
 import org.hank.botm.domain.model.Result
 import org.hank.botm.ui.model.PlayerResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.ui.Game
 
 class HomeViewModel(
     savedStateHandle: SavedStateHandle,
-    private val insertResultsUseCase: InsertResultsUseCase,
     private val gameRepository: GameRepository,
+    private val roundRepository: RoundRepository,
 ) : ViewModel() {
     private val gameId = savedStateHandle.toRoute<Game>().gameId
 
@@ -28,15 +28,17 @@ class HomeViewModel(
     private val _shouldNavToSetup = MutableStateFlow(false)
     val shouldNavToSetup = _shouldNavToSetup.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            gameRepository.refreshGame(gameId)
+        }
+    }
+
     fun submitResults(playerResults: List<PlayerResult>) {
         if (playerResults.size != 4) throw Exception("The gameResult list size should be 4 but was ${playerResults.size}")
 
         viewModelScope.launch {
-            insertResultsUseCase(
-                bet.value,
-                convertToResult(playerResults, bet.value),
-                gameId,
-            )
+            roundRepository.insertRound(gameId, bet.value, convertToResult(playerResults, bet.value))
         }
     }
 

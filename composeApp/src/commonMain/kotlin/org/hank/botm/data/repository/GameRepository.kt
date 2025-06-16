@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
-import org.hank.botm.data.database.model.GameWithDetailsEntity
+import org.hank.botm.data.database.dao.ResultDao
+import org.hank.botm.data.database.dao.RoundDao
+import org.hank.botm.data.database.model.RoundEntity
 import org.hank.botm.data.database.model.asDomain
 import org.hank.botm.data.network.api.GameApi
 import org.hank.botm.data.network.model.toEntity
@@ -23,12 +25,15 @@ interface GameRepository {
     val gameWithDetails: Flow<GameWithDetails>
     suspend fun createGame(createGame: CreateGame)
     suspend fun clearGame()
+    suspend fun refreshGame(id: Int)
 }
 
 class GameRepositoryImpl(
     private val appDatabase: AppDatabase,
     private val gameDao: GameDao,
     private val playerDao: PlayerDao,
+    private val roundDao: RoundDao,
+    private val resultDao: ResultDao,
     private val gameApi: GameApi,
     private val ioDispatcher: CoroutineDispatcher,
 ) : GameRepository {
@@ -36,7 +41,14 @@ class GameRepositoryImpl(
         .map { it?.asDomain() }
 
     override val gameWithDetails: Flow<GameWithDetails> =
-        gameDao.getNewestGameWithDetails().map { it.asDomain() }
+        gameDao.getNewestGameWithDetails()
+            .map { it.asDomain() }
+            .map { gameWithDetails ->
+                // reverse rounds to show newest first
+                gameWithDetails.copy(
+                    roundsWithResults = gameWithDetails.roundsWithResults.reversed()
+                )
+            }
 
     override suspend fun createGame(createGame: CreateGame) {
         withContext(ioDispatcher) {
@@ -54,5 +66,14 @@ class GameRepositoryImpl(
         withContext(ioDispatcher) {
             gameDao.clearGame()
         }
+    }
+
+    override suspend fun refreshGame(id: Int) {
+        val gameDetails = gameApi.getGame(id)
+        playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
+        val rounds = gameDetails.roundWithResults.map { RoundEntity(id = it.roundId, bet = it.bet, gameId = id) }
+        val results = gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }.flatten()
+        roundDao.insertRounds(rounds)
+        resultDao.insertResults(results)
     }
 }

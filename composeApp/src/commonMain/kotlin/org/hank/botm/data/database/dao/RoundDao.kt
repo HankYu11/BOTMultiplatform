@@ -44,4 +44,7 @@ interface RoundDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRound(round: RoundEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRounds(rounds: List<RoundEntity>)
 }

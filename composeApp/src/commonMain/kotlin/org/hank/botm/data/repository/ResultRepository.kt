@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 interface ResultRepository {
     fun getAllResults(): Flow<List<Result>>
     fun getRoundResults(roundId: Int): Flow<List<Result>>
-    suspend fun insertResults(results: List<Result>, roundId: Int)
+    suspend fun insertResults(results: List<Result>)
 }
 
 class ResultRepositoryImpl (
@@ -32,9 +32,7 @@ class ResultRepositoryImpl (
             it.map { it.asDomain() }
         }
 
-
-    override suspend fun insertResults(results: List<Result>, roundId: Int) = withContext(ioDispatcher) {
-        resultDao.insertResults(results.map { it.asEntity(roundId) })
-        Unit
+    override suspend fun insertResults(results: List<Result>) = withContext(ioDispatcher) {
+        resultDao.insertResults(results.map { it.asEntity() })
     }
 }

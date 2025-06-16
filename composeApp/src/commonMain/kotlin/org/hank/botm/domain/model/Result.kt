@@ -10,7 +10,7 @@ data class Result(
     val profit: Int = 0,
 )
 
-fun Result.asEntity(roundId: Int) = ResultEntity(
+fun Result.asEntity() = ResultEntity(
     roundId = roundId,
     playerId = playerId,
     profit = profit

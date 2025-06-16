@@ -69,6 +69,7 @@ fun HomeScreen(
     updateGame: (List<PlayerResult>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    println("gameWithDetails: $gameWithDetails")
     var showDialog by remember {
         mutableStateOf(false)
     }
@@ -101,7 +102,7 @@ fun HomeScreen(
 
         if (showDialog) {
             GameWinDialog(
-                players = gameWithDetails?.players ?: emptyList(),
+                players = gameWithDetails.players,
                 bet = bet,
                 updateBet = updateBet,
                 submitRound = { gameResults ->

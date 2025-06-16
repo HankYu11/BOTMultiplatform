@@ -17,5 +17,5 @@ interface ResultDao {
     fun getRoundResults(roundId: Int): Flow<List<ResultEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertResults(result: List<ResultEntity>): List<Long>
+    suspend fun insertResults(result: List<ResultEntity>)
 }

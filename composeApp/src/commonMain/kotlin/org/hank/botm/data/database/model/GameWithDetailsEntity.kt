@@ -18,7 +18,7 @@ data class GameWithDetailsEntity(
         entityColumn = "gameId",
         entity = RoundEntity::class
     )
-    val roundsWithResults: List<RoundWithResultsEntity> // Each Round will have its Results
+    val roundsWithResults: List<RoundWithResultsEntity>
 )
 
 fun GameWithDetailsEntity.asDomain() = GameWithDetails(
