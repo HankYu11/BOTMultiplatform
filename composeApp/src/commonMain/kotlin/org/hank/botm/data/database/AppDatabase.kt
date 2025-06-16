@@ -1,4 +1,4 @@
-package com.example.bigoldtwo.data.database
+package org.hank.botm.data.database
 
 import androidx.room.ConstructedBy
 import androidx.room.Database

@@ -62,9 +62,11 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.client.encoding)
         }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.ktor.client.darwin)
         }
     }
 }

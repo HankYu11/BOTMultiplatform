@@ -2,7 +2,7 @@ package org.hank.botm.data.repository
 
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
-import com.example.bigoldtwo.data.database.AppDatabase
+import org.hank.botm.data.database.AppDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

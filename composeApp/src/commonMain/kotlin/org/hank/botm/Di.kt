@@ -1,6 +1,6 @@
 package org.hank.botm
 
-import com.example.bigoldtwo.data.database.AppDatabase
+import org.hank.botm.data.database.AppDatabase
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -11,7 +11,6 @@ import org.hank.botm.data.database.dao.RoundDao
 import org.hank.botm.data.network.api.GameApi
 import org.hank.botm.data.network.api.GameApiImpl
 import org.hank.botm.data.network.api.RoundApi
-import org.hank.botm.data.network.createHttpClient
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.PlayerRepository
@@ -24,7 +23,6 @@ import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.KoinAppDeclaration
@@ -83,9 +81,9 @@ private fun dispatcherModule(): Module = module {
 }
 
 private fun networkModule(): Module = module {
-    single<HttpClient> { createHttpClient() }
     single<GameApi> { GameApiImpl(get()) }
     single<RoundApi> { RoundApi(get()) }
 }
 
+// It holds db and httpClient
 expect fun platformModule(): Module
