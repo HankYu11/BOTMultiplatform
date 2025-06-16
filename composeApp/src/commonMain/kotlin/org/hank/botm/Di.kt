@@ -1,7 +1,6 @@
 package org.hank.botm
 
 import org.hank.botm.data.database.AppDatabase
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.hank.botm.data.database.dao.GameDao
@@ -19,6 +18,7 @@ import org.hank.botm.data.repository.ResultRepository
 import org.hank.botm.data.repository.ResultRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
+import org.hank.botm.ui.AppViewModel
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.koin.core.context.startKoin
