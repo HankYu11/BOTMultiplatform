@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.KoinApplication
@@ -24,7 +25,7 @@ fun App() {
     val mainViewModel: AppViewModel = koinViewModel()
     val startDestination by mainViewModel.startDestination.collectAsState()
     val navController = rememberNavController()
-    MaterialTheme {
+    BigOldTwoTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
