@@ -6,7 +6,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import org.hank.botm.data.network.model.CreateRoundDto
 import org.hank.botm.data.network.model.RoundDetailsDto
-import org.hank.botm.data.network.model.RoundDto
 import org.hank.botm.domain.model.Result
 import org.hank.botm.domain.model.asPlayerResultDto
 

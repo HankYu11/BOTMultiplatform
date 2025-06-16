@@ -37,6 +37,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
     }
 }
 
+@Suppress("unused")
 fun initKoinIos() = initKoin(appDeclaration = {})
 
 fun commonModule(): Module = module {
