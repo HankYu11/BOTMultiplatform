@@ -9,13 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ResultDao {
-
-    @Query("SELECT * FROM result")
-    fun getAllResults(): Flow<List<ResultEntity>>
-
-    @Query("SELECT * FROM result WHERE roundId = :roundId")
-    fun getRoundResults(roundId: Int): Flow<List<ResultEntity>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertResults(result: List<ResultEntity>)
 }

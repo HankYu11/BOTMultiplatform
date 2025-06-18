@@ -30,7 +30,15 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            gameRepository.refreshGame(gameId)
+            gameRepository.refreshGame(gameId).let { result ->
+                result.fold(
+                    onSuccess = {
+                        // no-op
+                    }, onFailure = {
+                        // TODO("handle error")
+                    }
+                )
+            }
         }
     }
 
@@ -38,7 +46,19 @@ class HomeViewModel(
         if (playerResults.size != 4) throw Exception("The gameResult list size should be 4 but was ${playerResults.size}")
 
         viewModelScope.launch {
-            roundRepository.insertRound(gameId, bet.value, convertToResult(playerResults, bet.value))
+            roundRepository.insertRound(
+                gameId,
+                bet.value,
+                convertToResult(playerResults, bet.value)
+            ).let { result ->
+                result.fold(
+                    onSuccess = {
+                        // no-op
+                    }, onFailure = {
+                        // TODO("handle error")
+                    }
+                )
+            }
         }
     }
 

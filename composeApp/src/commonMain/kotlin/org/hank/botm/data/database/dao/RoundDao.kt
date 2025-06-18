@@ -13,35 +13,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RoundDao {
-    @Transaction
-    @Query(
-        """
-            SELECT * FROM round
-            WHERE round.gameId = :gameId
-            ORDER BY round.id DESC 
-        """
-    )
-    fun getAllNewestGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>>
-
-    @Transaction
-    suspend fun insertRoundWithRelations(
-        round: RoundEntity,
-        results: List<ResultEntity>,
-        players: List<PlayerEntity>,
-        playerDao: PlayerDao,
-        resultDao: ResultDao
-    ) {
-        val roundId = insertRound(round)
-        val resultsWithRoundId = results.map { result ->
-            // update players
-            playerDao.updatePlayerBalance(result.playerId, result.profit)
-            // add roundId to results
-            //FIXME("id should be Int to follow backend")
-            result.copy(roundId = roundId.toInt())
-        }
-        resultDao.insertResults(resultsWithRoundId)
-    }
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRound(round: RoundEntity): Long
 

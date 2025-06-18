@@ -2,11 +2,15 @@ package org.hank.botm.data.repository
 
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.RedirectResponseException
+import io.ktor.client.plugins.ServerResponseException
 import org.hank.botm.data.database.AppDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
@@ -14,6 +18,7 @@ import org.hank.botm.data.database.dao.RoundDao
 import org.hank.botm.data.database.model.RoundEntity
 import org.hank.botm.data.database.model.asDomain
 import org.hank.botm.data.network.api.GameApi
+import org.hank.botm.data.network.model.GameWithPlayersDto
 import org.hank.botm.data.network.model.toEntity
 import org.hank.botm.domain.model.CreateGame
 import org.hank.botm.domain.model.Game
@@ -23,9 +28,9 @@ import org.hank.botm.domain.model.toDto
 interface GameRepository {
     val game: Flow<Game?>
     val gameWithDetails: Flow<GameWithDetails>
-    suspend fun createGame(createGame: CreateGame)
+    suspend fun createGame(createGame: CreateGame): Result<Unit>
     suspend fun clearGame()
-    suspend fun refreshGame(id: Int)
+    suspend fun refreshGame(id: Int): Result<Unit>
 }
 
 class GameRepositoryImpl(
@@ -50,17 +55,22 @@ class GameRepositoryImpl(
                 )
             }
 
-    override suspend fun createGame(createGame: CreateGame) {
+    override suspend fun createGame(createGame: CreateGame): Result<Unit> =
         withContext(ioDispatcher) {
-            val gameWithPlayers = gameApi.createGame(createGame.toDto())
-            appDatabase.useWriterConnection { transactor ->
-                transactor.immediateTransaction {
-                    gameDao.insertGame(gameWithPlayers.game.toEntity())
-                    playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+            val gameWithPlayers: GameWithPlayersDto
+            try {
+                gameWithPlayers = gameApi.createGame(createGame.toDto())
+                appDatabase.useWriterConnection { transactor ->
+                    transactor.immediateTransaction {
+                        gameDao.insertGame(gameWithPlayers.game.toEntity())
+                        playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+                    }
                 }
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
-    }
 
     override suspend fun clearGame() {
         withContext(ioDispatcher) {
@@ -68,12 +78,25 @@ class GameRepositoryImpl(
         }
     }
 
-    override suspend fun refreshGame(id: Int) {
-        val gameDetails = gameApi.getGame(id)
-        playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
-        val rounds = gameDetails.roundWithResults.map { RoundEntity(id = it.roundId, bet = it.bet, gameId = id) }
-        val results = gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }.flatten()
-        roundDao.insertRounds(rounds)
-        resultDao.insertResults(results)
+    override suspend fun refreshGame(id: Int): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            val gameDetails = gameApi.getGame(id)
+            playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
+            val rounds = gameDetails.roundWithResults.map {
+                RoundEntity(
+                    id = it.roundId,
+                    bet = it.bet,
+                    gameId = id
+                )
+            }
+            val results =
+                gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }
+                    .flatten()
+            roundDao.insertRounds(rounds)
+            resultDao.insertResults(results)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

@@ -15,8 +15,7 @@ import org.hank.botm.data.network.api.RoundApi
 import org.hank.botm.data.network.model.toEntity
 
 interface RoundRepository {
-    suspend fun insertRound(gameId: Int, bet: Int, results: List<Result>)
-    fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>>
+    suspend fun insertRound(gameId: Int, bet: Int, results: List<Result>): kotlin.Result<Unit>
 }
 
 class RoundRepositoryImpl (
@@ -33,20 +32,21 @@ class RoundRepositoryImpl (
         bet: Int,
         results: List<Result>,
     ) = withContext(ioDispatcher) {
-        val roundDetails = roundApi.createRound(gameId = gameId, bet = bet, results = results)
-        val roundEntity = roundDetails.round.toEntity()
-        val playerEntities = roundDetails.players.map { it.toEntity() }
-        val resultEntities = roundDetails.results.map { it.toEntity() }
-        appDatabase.useWriterConnection { transactor ->
-            transactor.immediateTransaction {
-                roundDao.insertRound(roundEntity)
-                playerDao.updatePlayers(playerEntities)
-                resultDao.insertResults(resultEntities)
+        try {
+            val roundDetails = roundApi.createRound(gameId = gameId, bet = bet, results = results)
+            val roundEntity = roundDetails.round.toEntity()
+            val playerEntities = roundDetails.players.map { it.toEntity() }
+            val resultEntities = roundDetails.results.map { it.toEntity() }
+            appDatabase.useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    roundDao.insertRound(roundEntity)
+                    playerDao.updatePlayers(playerEntities)
+                    resultDao.insertResults(resultEntities)
+                }
             }
+            kotlin.Result.success(Unit)
+        } catch (e: Exception) {
+            kotlin.Result.failure(e)
         }
-    }
-
-    override fun getGameRoundWithResults(gameId: Int): Flow<List<RoundWithResultsEntity>> {
-        return roundDao.getAllNewestGameRoundWithResults(gameId)
     }
 }

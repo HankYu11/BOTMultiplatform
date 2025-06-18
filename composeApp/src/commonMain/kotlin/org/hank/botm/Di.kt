@@ -1,8 +1,8 @@
 package org.hank.botm
 
-import org.hank.botm.data.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
@@ -12,10 +12,6 @@ import org.hank.botm.data.network.api.GameApiImpl
 import org.hank.botm.data.network.api.RoundApi
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
-import org.hank.botm.data.repository.PlayerRepository
-import org.hank.botm.data.repository.PlayerRepositoryImpl
-import org.hank.botm.data.repository.ResultRepository
-import org.hank.botm.data.repository.ResultRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
 import org.hank.botm.ui.AppViewModel
@@ -65,8 +61,6 @@ private fun repositoryModule(): Module = module {
             get(named("IoDispatcher"))
         )
     }
-    single<PlayerRepository> { PlayerRepositoryImpl(get(), get(named("IoDispatcher"))) }
-    single<ResultRepository> { ResultRepositoryImpl(get(), get(named("IoDispatcher"))) }
     single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(), get(), get(named("IoDispatcher"))) }
 }
 

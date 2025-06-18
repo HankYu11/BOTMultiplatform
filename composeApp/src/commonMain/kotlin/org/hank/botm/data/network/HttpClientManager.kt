@@ -14,6 +14,8 @@ import kotlinx.serialization.json.Json
 import org.hank.botm.Config
 
 fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() {
+    expectSuccess = true
+
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
