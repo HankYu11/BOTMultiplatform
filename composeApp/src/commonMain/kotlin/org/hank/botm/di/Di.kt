@@ -14,6 +14,7 @@ import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
+import org.hank.botm.domain.usecase.CreateRoundUseCase
 import org.hank.botm.ui.AppViewModel
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
@@ -42,6 +43,7 @@ fun commonModule(): Module = module {
         repositoryModule(),
         dispatcherModule(),
         viewModelModule(),
+        useCaseModule(),
         networkModule(),
     )
 }
@@ -68,6 +70,10 @@ private fun viewModelModule(): Module = module {
     viewModel { AppViewModel(get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
+}
+
+private fun useCaseModule(): Module = module {
+    factory<CreateRoundUseCase> { CreateRoundUseCase(get(), get(named("IoDispatcher"))) }
 }
 
 private fun dispatcherModule(): Module = module {
