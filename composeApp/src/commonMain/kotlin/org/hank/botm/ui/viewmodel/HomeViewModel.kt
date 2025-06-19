@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.RoundRepository
+import org.hank.botm.domain.usecase.CreateRoundUseCase
 import org.hank.botm.ui.Game
 
 class HomeViewModel(
     savedStateHandle: SavedStateHandle,
     private val gameRepository: GameRepository,
-    private val roundRepository: RoundRepository,
+    private val createRoundUseCase: CreateRoundUseCase,
 ) : ViewModel() {
     private val gameId = savedStateHandle.toRoute<Game>().gameId
 
@@ -30,14 +31,8 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            gameRepository.refreshGame(gameId).let { result ->
-                result.fold(
-                    onSuccess = {
-                        // no-op
-                    }, onFailure = {
-                        // TODO("handle error")
-                    }
-                )
+            gameRepository.refreshGame(gameId).onFailure {
+                // TODO("handle error")
             }
         }
     }
@@ -46,18 +41,8 @@ class HomeViewModel(
         if (playerResults.size != 4) throw Exception("The gameResult list size should be 4 but was ${playerResults.size}")
 
         viewModelScope.launch {
-            roundRepository.insertRound(
-                gameId,
-                bet.value,
-                convertToResult(playerResults, bet.value)
-            ).let { result ->
-                result.fold(
-                    onSuccess = {
-                        // no-op
-                    }, onFailure = {
-                        // TODO("handle error")
-                    }
-                )
+            createRoundUseCase.invoke(gameId, bet.value, playerResults).onFailure {
+                // TODO("handle error")
             }
         }
     }
@@ -75,24 +60,5 @@ class HomeViewModel(
 
     fun finishNav() {
         _shouldNavToSetup.value = false
-    }
-
-    private fun convertToResult(playerResults: List<PlayerResult>, bet: Int): List<Result> {
-        fun String.cardsInHandToInt() =
-            toIntOrNull() ?: throw Exception("cardsInHand is not a number")
-
-        val totalProfit = playerResults.filter { !it.isWinner }.sumOf {
-            it.cardsInHand.cardsInHandToInt() * bet
-        }
-
-        val results = playerResults.map { gameResult ->
-            if (gameResult.isWinner) {
-                Result(playerId = gameResult.playerId, profit = totalProfit)
-            } else {
-                val profit = gameResult.cardsInHand.cardsInHandToInt() * bet * -1
-                Result(playerId = gameResult.playerId, profit = profit)
-            }
-        }
-        return results
     }
 }
