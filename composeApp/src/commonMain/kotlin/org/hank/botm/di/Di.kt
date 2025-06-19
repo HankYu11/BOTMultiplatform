@@ -1,4 +1,4 @@
-package org.hank.botm
+package org.hank.botm.di
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
