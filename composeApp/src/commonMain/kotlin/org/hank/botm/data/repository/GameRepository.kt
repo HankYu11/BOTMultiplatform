@@ -2,15 +2,11 @@ package org.hank.botm.data.repository
 
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.RedirectResponseException
-import io.ktor.client.plugins.ServerResponseException
-import org.hank.botm.data.database.AppDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.io.IOException
+import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
@@ -49,7 +45,7 @@ class GameRepositoryImpl(
         gameDao.getNewestGameWithDetails()
             .map { it.asDomain() }
             .map { gameWithDetails ->
-                // reverse rounds to show newest first
+                // reverse rounds to show the newest first
                 gameWithDetails.copy(
                     roundsWithResults = gameWithDetails.roundsWithResults.reversed()
                 )
