@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import botmultiplatform.composeapp.generated.resources.Res
 import botmultiplatform.composeapp.generated.resources.bot
 import org.hank.botm.ui.Lobby
-import org.hank.botm.ui.Room
+import org.hank.botm.ui.GameRoom
 import org.hank.botm.ui.viewmodel.SplashViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,7 +31,7 @@ fun SplashScreen(
         startDestination?.let { destination ->
             when (destination) {
                 is Lobby -> navToLobby()
-                is Room -> navToRoom(destination.gameId)
+                is GameRoom -> navToRoom(destination.gameId)
                 else -> {
                     throw Exception("Unknown start destination: $destination")
                 }

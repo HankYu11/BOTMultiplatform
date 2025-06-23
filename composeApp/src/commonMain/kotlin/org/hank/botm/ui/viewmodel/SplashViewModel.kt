@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.ui.Lobby
-import org.hank.botm.ui.Room
+import org.hank.botm.ui.GameRoom
 import org.hank.botm.ui.Screen
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -28,7 +28,7 @@ class SplashViewModel(
             val minSplashTime = 1.seconds
 
             val destination = gameRepository.game.firstOrNull()?.let {
-                Room(it.id)
+                GameRoom(it.id)
             } ?: run {
                 Lobby
             }

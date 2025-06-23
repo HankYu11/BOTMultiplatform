@@ -9,16 +9,16 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.domain.usecase.CreateRoundUseCase
-import org.hank.botm.ui.Room
+import org.hank.botm.ui.GameRoom
 import org.hank.botm.ui.model.PlayerResult
 import org.hank.botm.ui.state.HomeState
 
-class HomeViewModel(
+class GameRoomViewModel(
     savedStateHandle: SavedStateHandle,
     private val gameRepository: GameRepository,
     private val createRoundUseCase: CreateRoundUseCase,
 ) : ViewModel() {
-    private val gameId = savedStateHandle.toRoute<Room>().gameId
+    private val gameId = savedStateHandle.toRoute<GameRoom>().gameId
 
     // UI State
     private val _state = MutableStateFlow(HomeState())

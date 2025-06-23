@@ -15,9 +15,8 @@ import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
 import org.hank.botm.domain.usecase.CreateRoundUseCase
-import org.hank.botm.ui.screen.SplashScreen
-import org.hank.botm.ui.viewmodel.GameLobbyViewModel
-import org.hank.botm.ui.viewmodel.HomeViewModel
+import org.hank.botm.ui.viewmodel.LobbyViewModel
+import org.hank.botm.ui.viewmodel.GameRoomViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
 import org.hank.botm.ui.viewmodel.SplashViewModel
 import org.koin.core.context.startKoin
@@ -70,9 +69,9 @@ private fun repositoryModule(): Module = module {
 
 private fun viewModelModule(): Module = module {
     viewModel { SplashViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get()) }
+    viewModel { GameRoomViewModel(get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
-    viewModel { GameLobbyViewModel(get()) }
+    viewModel { LobbyViewModel(get()) }
 }
 
 private fun useCaseModule(): Module = module {

@@ -12,14 +12,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import org.hank.botm.ui.viewmodel.GameLobbyViewModel
+import org.hank.botm.ui.viewmodel.LobbyViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -29,27 +28,27 @@ fun GameLobbyScreen(
     navToSetup: () -> Unit,
     navToGame: (gameId: Int) -> Unit,
     modifier: Modifier = Modifier,
-    gameLobbyViewModel: GameLobbyViewModel = koinViewModel(),
+    lobbyViewModel: LobbyViewModel = koinViewModel(),
 ) {
-    val state by gameLobbyViewModel.state.collectAsState()
+    val state by lobbyViewModel.state.collectAsState()
 
     var gameId by remember {
         mutableStateOf("")
     }
 
     LaunchedEffect(Unit) {
-        gameLobbyViewModel.navigateToRoom.collect { gameId ->
+        lobbyViewModel.navigateToRoom.collect { gameId ->
             navToGame(gameId)
         }
     }
 
     if (state.error != null) {
         AlertDialog(
-            onDismissRequest = { gameLobbyViewModel.dismissError() },
+            onDismissRequest = { lobbyViewModel.dismissError() },
             title = { Text(text = "Failed to join the game") },
             text = { Text(text = "Please check the game ID and try again.") },
             confirmButton = {
-                TextButton(onClick = { gameLobbyViewModel.dismissError() }) {
+                TextButton(onClick = { lobbyViewModel.dismissError() }) {
                     Text("Ok")
                 }
             }
@@ -60,8 +59,8 @@ fun GameLobbyScreen(
         JoinRoomDialog(
             gameId = gameId,
             onGameIdChange = { gameId = it },
-            onDismissRequest = gameLobbyViewModel::hideJoinGameDialog,
-            onJoinClicked = gameLobbyViewModel::joinGame,
+            onDismissRequest = lobbyViewModel::hideJoinGameDialog,
+            onJoinClicked = lobbyViewModel::joinGame,
         )
     }
 
@@ -78,7 +77,7 @@ fun GameLobbyScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Button(onClick = {
-                gameLobbyViewModel.showJoinGameDialog()
+                lobbyViewModel.showJoinGameDialog()
             }) {
                 Text(text = "Join a Game")
             }

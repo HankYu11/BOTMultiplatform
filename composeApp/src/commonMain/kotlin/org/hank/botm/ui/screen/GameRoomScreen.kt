@@ -28,7 +28,7 @@ import org.hank.botm.ui.component.ResultView
 import org.hank.botm.ui.model.PlayerResult
 import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.hank.botm.ui.viewmodel.GameError
-import org.hank.botm.ui.viewmodel.HomeViewModel
+import org.hank.botm.ui.viewmodel.GameRoomViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -36,13 +36,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     navToLobby: () -> Unit,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = koinViewModel(),
+    gameRoomViewModel: GameRoomViewModel = koinViewModel(),
 ) {
-    val state by homeViewModel.state.collectAsState()
+    val state by gameRoomViewModel.state.collectAsState()
 
     // Handle navigation
     LaunchedEffect(Unit) {
-        homeViewModel.navigateToSetup.collect {
+        gameRoomViewModel.navigateToSetup.collect {
             navToLobby()
         }
     }
@@ -52,11 +52,11 @@ fun HomeScreen(
         when (it) {
             is GameError.CreateRoundFailed -> {
                 AlertDialog(
-                    onDismissRequest = { homeViewModel.hideError() },
+                    onDismissRequest = { gameRoomViewModel.hideError() },
                     title = { Text(text = "Failed to create a game") },
                     text = { Text(text = it.message ?: "Something went wrong" ) },
                     confirmButton = {
-                        TextButton(onClick = { homeViewModel.hideError() }) {
+                        TextButton(onClick = { gameRoomViewModel.hideError() }) {
                             Text("Ok")
                         }
                     }
@@ -69,7 +69,7 @@ fun HomeScreen(
                     title = { Text(text = "Something went wrong") },
                     text = { Text(text = it.message ?: "Something went wrong") },
                     confirmButton = {
-                        TextButton(onClick = { homeViewModel.refreshGame() }) {
+                        TextButton(onClick = { gameRoomViewModel.refreshGame() }) {
                             Text("Retry")
                         }
                     }
@@ -77,11 +77,11 @@ fun HomeScreen(
             }
             is GameError.SummitResultError -> {
                 AlertDialog(
-                    onDismissRequest = { homeViewModel.hideError() },
+                    onDismissRequest = { gameRoomViewModel.hideError() },
                     title = { Text(text = "Summit Results Error") },
                     text = { Text(text = it.message ?: "Something went wrong") },
                     confirmButton = {
-                        TextButton(onClick = { homeViewModel.hideError() }) {
+                        TextButton(onClick = { gameRoomViewModel.hideError() }) {
                             Text("Ok")
                         }
                     }
@@ -98,12 +98,12 @@ fun HomeScreen(
         HomeScreen(
             bet = state.bet,
             gameWithDetails = it,
-            startNewGame = { homeViewModel.startNewGame() },
+            startNewGame = { gameRoomViewModel.startNewGame() },
             updateBet = { newBet ->
-                homeViewModel.updateBet(newBet)
+                gameRoomViewModel.updateBet(newBet)
             },
             updateGame = { gameResults ->
-                homeViewModel.submitResults(gameResults)
+                gameRoomViewModel.submitResults(gameResults)
             },
             modifier = modifier,
         )

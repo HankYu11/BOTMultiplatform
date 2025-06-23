@@ -20,15 +20,15 @@ sealed interface Screen
 data object Splash: Screen
 
 @Serializable
+data object Lobby: Screen
+
+@Serializable
 data object Setup: Screen
 
 @Serializable
-data class Room(
+data class GameRoom(
     val gameId: Int
 ): Screen
-
-@Serializable
-data object Lobby: Screen
 
 @Composable
 fun BigOldTwoNavHost(
@@ -44,7 +44,7 @@ fun BigOldTwoNavHost(
                     }
                 },
                 navToRoom = {
-                    navController.navigate(route = Room(it)) {
+                    navController.navigate(route = GameRoom(it)) {
                         popUpTo(Splash) { inclusive = true }
                     }
                 }
@@ -55,17 +55,17 @@ fun BigOldTwoNavHost(
             SetupScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 navToGame = {
-                    navController.navigate(route = Room(it)) {
+                    navController.navigate(route = GameRoom(it)) {
                         popUpTo<Setup>() { inclusive = true }
                     }
                 }
             )
         }
-        composable<Room> {
+        composable<GameRoom> {
             HomeScreen(
                 navToLobby = {
                     navController.navigate(route = Lobby) {
-                        popUpTo<Room> { inclusive = true }
+                        popUpTo<GameRoom> { inclusive = true }
                     }
                 },
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -79,7 +79,7 @@ fun BigOldTwoNavHost(
                     }
                 },
                 navToGame = {
-                    navController.navigate(route = Room(it)) {
+                    navController.navigate(route = GameRoom(it)) {
                         popUpTo(Lobby) { inclusive = true }
                     }
                 },

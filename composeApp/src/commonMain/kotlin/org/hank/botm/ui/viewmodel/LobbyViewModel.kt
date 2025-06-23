@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.ui.state.LobbyState
 
-class GameLobbyViewModel(
+class LobbyViewModel(
     private val gameRepository: GameRepository,
 ): ViewModel() {
 
