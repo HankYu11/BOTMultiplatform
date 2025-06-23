@@ -28,6 +28,7 @@ interface GameRepository {
     suspend fun createGame(createGame: CreateGame): Result<Unit>
     suspend fun clearGame()
     suspend fun refreshGame(id: Int): Result<Unit>
+    suspend fun checkGameExists(gameId: Int): Result<Unit>
 }
 
 class GameRepositoryImpl(
@@ -79,6 +80,7 @@ class GameRepositoryImpl(
     override suspend fun refreshGame(id: Int): Result<Unit> = withContext(ioDispatcher) {
         try {
             val gameDetails = gameApi.getGame(id)
+            gameDao.insertGame(gameDetails.game.toEntity())
             playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
             val rounds = gameDetails.roundWithResults.map {
                 RoundEntity(
@@ -92,6 +94,15 @@ class GameRepositoryImpl(
                     .flatten()
             roundDao.insertRounds(rounds)
             resultDao.insertResults(results)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher){
+        try {
+            gameApi.headGame(gameId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

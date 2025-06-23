@@ -18,9 +18,9 @@ class AppViewModel(
         gameRepository.game
             .onEach {
                 if (it != null) {
-                    _startDestination.value = Game(it.id)
+                    _startDestination.value = Room(it.id)
                 } else {
-                    _startDestination.value = Setup
+                    _startDestination.value = Lobby
                 }
             }.launchIn(viewModelScope)
     }

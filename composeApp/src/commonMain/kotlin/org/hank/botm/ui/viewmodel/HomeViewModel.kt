@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.domain.usecase.CreateRoundUseCase
-import org.hank.botm.ui.Game
+import org.hank.botm.ui.Room
 import org.hank.botm.ui.model.PlayerResult
 import org.hank.botm.ui.state.HomeState
 
@@ -18,7 +18,7 @@ class HomeViewModel(
     private val gameRepository: GameRepository,
     private val createRoundUseCase: CreateRoundUseCase,
 ) : ViewModel() {
-    private val gameId = savedStateHandle.toRoute<Game>().gameId
+    private val gameId = savedStateHandle.toRoute<Room>().gameId
 
     // UI State
     private val _state = MutableStateFlow(HomeState())
@@ -54,7 +54,7 @@ class HomeViewModel(
     fun submitResults(playerResults: List<PlayerResult>) {
         if (playerResults.size != 4) {
             _state.value = _state.value.copy(
-                error = "The gameResult list size should be 4 but was ${playerResults.size}"
+                gameError = GameError.SummitResultError("The gameResult list size should be 4 but was ${playerResults.size}")
             )
             return
         }
@@ -73,7 +73,7 @@ class HomeViewModel(
     }
 
     fun hideError() {
-        _state.value = _state.value.copy(gameError = null, error = null)
+        _state.value = _state.value.copy(gameError = null)
     }
 
     fun updateBet(bet: Int) {
@@ -90,7 +90,9 @@ class HomeViewModel(
     }
 }
 
-sealed class GameError {
-    data class RefreshGameFailed(val message: String?) : GameError()
-    data class CreateRoundFailed(val message: String?) : GameError()
+sealed interface GameError {
+    val message: String?
+    data class RefreshGameFailed(override val message: String?) : GameError
+    data class CreateRoundFailed(override val message: String?) : GameError
+    data class SummitResultError(override val message: String?) : GameError
 }

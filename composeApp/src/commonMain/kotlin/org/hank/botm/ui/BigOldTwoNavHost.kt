@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import org.hank.botm.ui.screen.HomeScreen
 import org.hank.botm.ui.screen.SetupScreen
 import kotlinx.serialization.Serializable
+import org.hank.botm.ui.screen.GameLobbyScreen
 
 sealed interface Screen
 
@@ -19,9 +19,12 @@ sealed interface Screen
 data object Setup: Screen
 
 @Serializable
-data class Game(
+data class Room(
     val gameId: Int
 ): Screen
+
+@Serializable
+data object Lobby: Screen
 
 @Composable
 fun BigOldTwoNavHost(
@@ -34,13 +37,13 @@ fun BigOldTwoNavHost(
             SetupScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 navToGame = {
-                    navController.navigate(route = Game(it)) {
+                    navController.navigate(route = Room(it)) {
                         launchSingleTop = true
                     }
                 }
             )
         }
-        composable<Game> {
+        composable<Room> {
             HomeScreen(
                 navToSetup = {
                     navController.navigate(route = Setup) {
@@ -48,6 +51,20 @@ fun BigOldTwoNavHost(
                     }
                 },
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
+            )
+        }
+        composable<Lobby> {
+            GameLobbyScreen(
+                navToSetup = {
+                    navController.navigate(route = Setup) {
+                        launchSingleTop = true
+                    }
+                },
+                navToGame = {
+                    navController.navigate(route = Room(it)) {
+                        launchSingleTop = true
+                    }
+                },
             )
         }
     }

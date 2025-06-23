@@ -18,7 +18,7 @@ interface GameDao {
     @Query("SELECT * FROM game ORDER BY id DESC LIMIT 1")
     fun getNewestGameWithDetails(): Flow<GameWithDetailsEntity?>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGame(gameEntity: GameEntity)
 
     // We clear all related tables when deleting a game with relations defined in entities

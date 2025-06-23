@@ -21,7 +21,6 @@ fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() 
         level = LogLevel.ALL
         logger = object: Logger {
             override fun log(message: String) {
-                // TODO("use Timber")
             }
         }
     }

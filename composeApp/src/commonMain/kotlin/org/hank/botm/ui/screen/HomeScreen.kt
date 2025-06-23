@@ -24,6 +24,7 @@ import org.hank.botm.domain.model.Result
 import org.hank.botm.domain.model.Round
 import org.hank.botm.domain.model.RoundWithResults
 import org.hank.botm.ui.component.GameWinDialog
+import org.hank.botm.ui.component.ResultView
 import org.hank.botm.ui.model.PlayerResult
 import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.hank.botm.ui.viewmodel.GameError
@@ -74,26 +75,23 @@ fun HomeScreen(
                     }
                 )
             }
+            is GameError.SummitResultError -> {
+                AlertDialog(
+                    onDismissRequest = { homeViewModel.hideError() },
+                    title = { Text(text = "Summit Results Error") },
+                    text = { Text(text = it.message ?: "Something went wrong") },
+                    confirmButton = {
+                        TextButton(onClick = { homeViewModel.hideError() }) {
+                            Text("Ok")
+                        }
+                    }
+                )
+            }
         }
     }
 
-    // Show generic error if there's one
-    state.error?.let { errorMessage ->
-        AlertDialog(
-            onDismissRequest = { homeViewModel.hideError() },
-            title = { Text(text = "Error") },
-            text = { Text(text = errorMessage) },
-            confirmButton = {
-                TextButton(onClick = { homeViewModel.hideError() }) {
-                    Text("Ok")
-                }
-            }
-        )
-    }
-
-    // Show loading indicator if loading
     if (state.isLoading) {
-        // You can add a loading indicator here
+        // TODO("Add loading")
     }
 
     state.gameWithDetails?.let {

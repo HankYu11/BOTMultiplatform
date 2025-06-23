@@ -1,4 +1,4 @@
-package org.hank.botm.ui.screen
+package org.hank.botm.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
