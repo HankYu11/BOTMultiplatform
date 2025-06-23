@@ -1,20 +1,20 @@
 # Improvement Tasks Checklist
 
 ## Architecture Improvements
-[ ] 1. Implement a proper dependency injection pattern with Koin modules organized by feature
-[ ] 2. Create a proper error handling strategy across the application
+[x] 1. Implement a proper dependency injection pattern with Koin modules organized by feature
+[x] 2. Create a proper error handling strategy across the application
 [ ] 3. Implement a caching strategy for network requests
-[ ] 4. Extract business logic from ViewModels to use cases/interactors
+[x] 4. Extract business logic from ViewModels to use cases/interactors
 [ ] 5. Create a consistent state management pattern for UI components
 [ ] 6. Implement proper configuration management instead of hardcoded values
 [ ] 7. Add proper lifecycle management for resources
 
 ## Code Quality
 [ ] 8. Fix all TODO comments in the codebase
-[ ] 9. Replace exception throwing with proper error handling
+[x] 9. Replace exception throwing with proper error handling
 [ ] 10. Implement input validation for user inputs
 [ ] 11. Add proper logging throughout the application
-[ ] 12. Implement consistent error handling in repositories
+[x] 12. Implement consistent error handling in repositories
 [ ] 13. Add proper null safety checks
 [ ] 14. Refactor long methods to improve readability
 [ ] 15. Implement consistent naming conventions

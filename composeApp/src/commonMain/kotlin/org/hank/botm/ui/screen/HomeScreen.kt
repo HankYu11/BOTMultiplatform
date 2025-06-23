@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.DialogProperties
 import org.hank.botm.domain.model.GameWithDetails
 import org.hank.botm.domain.model.Player
 import org.hank.botm.domain.model.Result
@@ -23,6 +26,7 @@ import org.hank.botm.domain.model.RoundWithResults
 import org.hank.botm.ui.component.GameWinDialog
 import org.hank.botm.ui.model.PlayerResult
 import org.hank.botm.ui.theme.BigOldTwoTheme
+import org.hank.botm.ui.viewmodel.GameError
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,11 +40,42 @@ fun HomeScreen(
     val bet by homeViewModel.bet.collectAsState()
     val shouldNavToSetup by homeViewModel.shouldNavToSetup.collectAsState()
     val gameWithDetails by homeViewModel.gameWithDetails.collectAsState(null)
+    val error by homeViewModel.error.collectAsState()
 
     LaunchedEffect(shouldNavToSetup) {
         if (shouldNavToSetup) {
             navToSetup()
             homeViewModel.finishNav()
+        }
+    }
+
+    error?.let {
+        when (it) {
+            is GameError.CreateRoundFailed -> {
+                AlertDialog(
+                    onDismissRequest = { homeViewModel.hideError() },
+                    title = { Text(text = "Failed to create a game") },
+                    text = { Text(text = it.message ?: "Something went wrong" ) },
+                    confirmButton = {
+                        TextButton(onClick = { homeViewModel.hideError() }) {
+                            Text("Ok")
+                        }
+                    }
+                )
+            }
+            is GameError.RefreshGameFailed -> {
+                AlertDialog(
+                    properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+                    onDismissRequest = { /* shouldn't triggered */ },
+                    title = { Text(text = "Something went wrong") },
+                    text = { Text(text = it.message ?: "Something went wrong") },
+                    confirmButton = {
+                        TextButton(onClick = { homeViewModel.refreshGame() }) {
+                            Text("Retry")
+                        }
+                    }
+                )
+            }
         }
     }
 

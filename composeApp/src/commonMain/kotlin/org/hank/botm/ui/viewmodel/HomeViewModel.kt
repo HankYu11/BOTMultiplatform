@@ -24,13 +24,21 @@ class HomeViewModel(
     private val _bet = MutableStateFlow(1)
     val bet = _bet.asStateFlow()
 
+    private val _error = MutableStateFlow<GameError?>(null)
+    val error = _error.asStateFlow()
+
     private val _shouldNavToSetup = MutableStateFlow(false)
     val shouldNavToSetup = _shouldNavToSetup.asStateFlow()
 
     init {
+        refreshGame()
+    }
+
+    fun refreshGame() {
         viewModelScope.launch {
+            _error.value = null
             gameRepository.refreshGame(gameId).onFailure {
-                // TODO("handle error")
+                _error.value = GameError.RefreshGameFailed(it.message)
             }
         }
     }
@@ -40,9 +48,13 @@ class HomeViewModel(
 
         viewModelScope.launch {
             createRoundUseCase.invoke(gameId, bet.value, playerResults).onFailure {
-                // TODO("handle error")
+                _error.value = GameError.CreateRoundFailed(it.message)
             }
         }
+    }
+
+    fun hideError() {
+        _error.value = null
     }
 
     fun updateBet(bet: Int) {
@@ -59,4 +71,9 @@ class HomeViewModel(
     fun finishNav() {
         _shouldNavToSetup.value = false
     }
+}
+
+sealed class GameError {
+    data class RefreshGameFailed(val message: String?) : GameError()
+    data class CreateRoundFailed(val message: String?) : GameError()
 }

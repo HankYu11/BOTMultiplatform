@@ -15,7 +15,6 @@ class AppViewModel(
     val startDestination = _startDestination.asStateFlow()
 
     init {
-        // directly nav to gamePage if has unfinished game
         gameRepository.game
             .onEach {
                 if (it != null) {
