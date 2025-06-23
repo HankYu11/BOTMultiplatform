@@ -40,32 +40,53 @@ fun SetupScreen(
     modifier: Modifier = Modifier,
     setupViewModel: SetupViewModel = koinViewModel(),
 ) {
-    val gameId by setupViewModel.gameId.collectAsState(null)
-    val alertMessage by setupViewModel.alertMessage.collectAsState()
+    val state by setupViewModel.state.collectAsState()
 
-    LaunchedEffect(gameId) {
-        gameId?.let(navToGame)
+    // Handle navigation
+    LaunchedEffect(Unit) {
+        setupViewModel.navigateToGame.collect { gameId ->
+            navToGame(gameId)
+        }
+    }
+
+    // Show error dialog if there's an error
+    state.error?.let { errorMessage ->
+        AlertDialog(
+            onDismissRequest = { setupViewModel.dismissAlert() },
+            title = { Text(text = "Alert") },
+            text = { Text(text = errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { setupViewModel.dismissAlert() }) { 
+                    Text("Confirm") 
+                }
+            },
+        )
+    }
+
+    // Show loading indicator if loading
+    if (state.isLoading) {
+        // You can add a loading indicator here
     }
 
     SetupScreen(
-        setupViewModel::createGame,
-        alertMessage,
-        setupViewModel::dismissAlert,
-        modifier,
+        createGame = { createGame ->
+            setupViewModel.createGame(createGame)
+        },
+        createGameState = state.createGame,
+        updatePlayerName = { index, name ->
+            setupViewModel.updatePlayerName(index, name)
+        },
+        modifier = modifier,
     )
 }
 
 @Composable
 fun SetupScreen(
     createGame: (CreateGame) -> Unit,
-    alertMessage: String,
-    dismissAlert: () -> Unit,
+    createGameState: CreateGame,
+    updatePlayerName: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var players by remember {
-        mutableStateOf(CreateGame())
-    }
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -76,9 +97,9 @@ fun SetupScreen(
             items(4) {
                 PlayerSetupView(
                     index = it,
-                    name = players.getNameByIndex(it),
+                    name = createGameState.getNameByIndex(it),
                     onNameChange = { index, name ->
-                        players = players.withNameChanged(index, name)
+                        updatePlayerName(index, name)
                     }
                 )
             }
@@ -88,22 +109,11 @@ fun SetupScreen(
 
         Button(
             onClick = {
-                createGame(players)
+                createGame(createGameState)
             },
         ) {
             Text(text = "Start Game")
         }
-    }
-
-    if (alertMessage.isNotEmpty()) {
-        AlertDialog(
-            onDismissRequest = dismissAlert,
-            title = { Text(text = "Alert") },
-            text = { Text(text = alertMessage) },
-            confirmButton = {
-                TextButton(onClick = dismissAlert) { Text("Confirm") }
-            },
-        )
     }
 }
 
@@ -148,9 +158,9 @@ fun PlayerSetupView(
 @Composable
 fun SetupScreenPreview() {
     SetupScreen(
-        {},
-        "",
-        {},
+        createGame = {},
+        createGameState = CreateGame(),
+        updatePlayerName = { _, _ -> },
         modifier = Modifier.fillMaxSize()
     )
 }

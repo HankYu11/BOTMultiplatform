@@ -37,19 +37,17 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = koinViewModel(),
 ) {
-    val bet by homeViewModel.bet.collectAsState()
-    val shouldNavToSetup by homeViewModel.shouldNavToSetup.collectAsState()
-    val gameWithDetails by homeViewModel.gameWithDetails.collectAsState(null)
-    val error by homeViewModel.error.collectAsState()
+    val state by homeViewModel.state.collectAsState()
 
-    LaunchedEffect(shouldNavToSetup) {
-        if (shouldNavToSetup) {
+    // Handle navigation
+    LaunchedEffect(Unit) {
+        homeViewModel.navigateToSetup.collect {
             navToSetup()
-            homeViewModel.finishNav()
         }
     }
 
-    error?.let {
+    // Show error dialog if there's an error
+    state.gameError?.let {
         when (it) {
             is GameError.CreateRoundFailed -> {
                 AlertDialog(
@@ -79,9 +77,28 @@ fun HomeScreen(
         }
     }
 
-    gameWithDetails?.let {
+    // Show generic error if there's one
+    state.error?.let { errorMessage ->
+        AlertDialog(
+            onDismissRequest = { homeViewModel.hideError() },
+            title = { Text(text = "Error") },
+            text = { Text(text = errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { homeViewModel.hideError() }) {
+                    Text("Ok")
+                }
+            }
+        )
+    }
+
+    // Show loading indicator if loading
+    if (state.isLoading) {
+        // You can add a loading indicator here
+    }
+
+    state.gameWithDetails?.let {
         HomeScreen(
-            bet = bet,
+            bet = state.bet,
             gameWithDetails = it,
             startNewGame = { homeViewModel.startNewGame() },
             updateBet = { newBet ->
