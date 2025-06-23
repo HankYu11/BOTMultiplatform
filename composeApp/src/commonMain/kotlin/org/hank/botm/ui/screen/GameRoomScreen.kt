@@ -1,12 +1,14 @@
 package org.hank.botm.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import org.hank.botm.domain.model.GameWithDetails
@@ -90,10 +93,6 @@ fun HomeScreen(
         }
     }
 
-    if (state.isLoading) {
-        // TODO("Add loading")
-    }
-
     state.gameWithDetails?.let {
         HomeScreen(
             bet = state.bet,
@@ -107,6 +106,15 @@ fun HomeScreen(
             },
             modifier = modifier,
         )
+    }
+
+    if (state.isLoading) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
     }
 }
 
