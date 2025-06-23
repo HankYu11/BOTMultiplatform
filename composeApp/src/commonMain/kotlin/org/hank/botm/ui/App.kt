@@ -6,13 +6,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import org.hank.botm.ui.theme.BigOldTwoTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.KoinApplication
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,8 +18,6 @@ import org.koin.core.KoinApplication
 fun App() {
     KoinApplication.init()
 
-    val mainViewModel: AppViewModel = koinViewModel()
-    val startDestination by mainViewModel.startDestination.collectAsState()
     val navController = rememberNavController()
     BigOldTwoTheme {
         Scaffold(
@@ -35,13 +30,10 @@ fun App() {
                 )
             }
         ) { innerPadding ->
-            startDestination?.let { destination ->
-                BigOldTwoNavHost(
-                    navController = navController,
-                    startDestination = destination,
-                    innerPadding = innerPadding
-                )
-            }
+            BigOldTwoNavHost(
+                navController = navController,
+                innerPadding = innerPadding
+            )
         }
     }
 }

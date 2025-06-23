@@ -34,7 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
-    navToSetup: () -> Unit,
+    navToLobby: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -43,7 +43,7 @@ fun HomeScreen(
     // Handle navigation
     LaunchedEffect(Unit) {
         homeViewModel.navigateToSetup.collect {
-            navToSetup()
+            navToLobby()
         }
     }
 

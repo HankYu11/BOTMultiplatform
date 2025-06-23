@@ -7,7 +7,7 @@ enum class Environment {
 
 object Config {
     // temp manual approach for using local environment
-    private var environment: Environment = Environment.DEV
+    private var environment: Environment = Environment.PROD
 
     val baseUrl = when (environment) {
         // 10.0.2.2 is the setup for emulator

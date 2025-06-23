@@ -28,6 +28,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun GameLobbyScreen(
     navToSetup: () -> Unit,
     navToGame: (gameId: Int) -> Unit,
+    modifier: Modifier = Modifier,
     gameLobbyViewModel: GameLobbyViewModel = koinViewModel(),
 ) {
     val state by gameLobbyViewModel.state.collectAsState()
@@ -65,7 +66,7 @@ fun GameLobbyScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
     ) {
         Card(
             shape = RoundedCornerShape(18.dp),

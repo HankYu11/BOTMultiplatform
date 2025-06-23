@@ -15,10 +15,11 @@ import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
 import org.hank.botm.domain.usecase.CreateRoundUseCase
-import org.hank.botm.ui.AppViewModel
+import org.hank.botm.ui.screen.SplashScreen
 import org.hank.botm.ui.viewmodel.GameLobbyViewModel
 import org.hank.botm.ui.viewmodel.HomeViewModel
 import org.hank.botm.ui.viewmodel.SetupViewModel
+import org.hank.botm.ui.viewmodel.SplashViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -68,7 +69,7 @@ private fun repositoryModule(): Module = module {
 }
 
 private fun viewModelModule(): Module = module {
-    viewModel { AppViewModel(get()) }
+    viewModel { SplashViewModel(get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
     viewModel { GameLobbyViewModel(get()) }
