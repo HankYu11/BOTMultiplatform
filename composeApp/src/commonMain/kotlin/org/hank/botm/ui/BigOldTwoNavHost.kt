@@ -56,7 +56,7 @@ fun BigOldTwoNavHost(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 navToGame = {
                     navController.navigate(route = Room(it)) {
-                        popUpTo(Setup) { inclusive = true }
+                        popUpTo<Setup>() { inclusive = true }
                     }
                 }
             )
@@ -65,7 +65,7 @@ fun BigOldTwoNavHost(
             HomeScreen(
                 navToLobby = {
                     navController.navigate(route = Lobby) {
-                        popUpTo(Room) { inclusive = true }
+                        popUpTo<Room> { inclusive = true }
                     }
                 },
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
