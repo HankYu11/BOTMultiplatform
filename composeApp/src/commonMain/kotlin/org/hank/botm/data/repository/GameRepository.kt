@@ -4,6 +4,7 @@ import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.AppDatabase
@@ -43,6 +44,7 @@ class GameRepositoryImpl(
 
     override val gameWithDetails: Flow<GameWithDetails> =
         gameDao.getNewestGameWithDetails()
+            .filterNotNull()
             .map { it.asDomain() }
             .map { gameWithDetails ->
                 // reverse rounds to show the newest first
