@@ -1,31 +1,13 @@
 package org.hank.botm.ui.screen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import org.hank.botm.domain.model.GameWithDetails
-import org.hank.botm.domain.model.Player
-import org.hank.botm.domain.model.Result
-import org.hank.botm.domain.model.Round
-import org.hank.botm.domain.model.RoundWithResults
+import org.hank.botm.domain.model.*
 import org.hank.botm.ui.component.GameWinDialog
 import org.hank.botm.ui.component.ResultView
 import org.hank.botm.ui.model.PlayerResult
@@ -57,7 +39,7 @@ fun HomeScreen(
                 AlertDialog(
                     onDismissRequest = { gameRoomViewModel.hideError() },
                     title = { Text(text = "Failed to create a game") },
-                    text = { Text(text = it.message ?: "Something went wrong" ) },
+                    text = { Text(text = it.message ?: "Something went wrong") },
                     confirmButton = {
                         TextButton(onClick = { gameRoomViewModel.hideError() }) {
                             Text("Ok")
@@ -65,6 +47,7 @@ fun HomeScreen(
                     }
                 )
             }
+
             is GameError.RefreshGameFailed -> {
                 AlertDialog(
                     properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
@@ -78,6 +61,7 @@ fun HomeScreen(
                     }
                 )
             }
+
             is GameError.SummitResultError -> {
                 AlertDialog(
                     onDismissRequest = { gameRoomViewModel.hideError() },
@@ -135,6 +119,22 @@ fun HomeScreen(
         modifier = modifier,
         verticalArrangement = Arrangement.Bottom,
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+        ) {
+            Spacer(modifier = Modifier.size(1.dp))
+
+            Text(
+                text = "Game ID: ${gameWithDetails.gameId}",
+            )
+
+            Text(
+                text = "Bet: $bet",
+            )
+        }
         ResultView(
             modifier = Modifier.weight(1f),
             players = gameWithDetails.players,
