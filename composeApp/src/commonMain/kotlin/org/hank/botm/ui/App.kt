@@ -1,6 +1,7 @@
 package org.hank.botm.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,7 +24,7 @@ fun App() {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopAppBar(
+                CenterAlignedTopAppBar(
                     title = {
                         Text("大老二計分板")
                     }
