@@ -1,7 +1,9 @@
 package org.hank.botm.di
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
@@ -61,7 +63,8 @@ private fun repositoryModule(): Module = module {
     single<GameRepository> {
         GameRepositoryImpl(
             get(), get(), get(), get(), get(), get(),
-            get(named("IoDispatcher"))
+            get(named("IoDispatcher")),
+            get(named("ApplicationScope")),
         )
     }
     single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(), get(), get(named("IoDispatcher"))) }
@@ -79,6 +82,7 @@ private fun useCaseModule(): Module = module {
 }
 
 private fun dispatcherModule(): Module = module {
+    single(named("ApplicationScope")) { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single(named("IoDispatcher")) { Dispatchers.IO }
     single(named("MainDispatcher")) { Dispatchers.Main }
 }

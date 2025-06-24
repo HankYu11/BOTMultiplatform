@@ -34,21 +34,12 @@ class GameRoomViewModel(
                 _state.value = _state.value.copy(gameWithDetails = it)
             }.launchIn(viewModelScope)
 
-        refreshGame()
+        gameRepository.subscribeToGameUpdates(gameId)
     }
 
     fun refreshGame() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, gameError = null)
-            gameRepository.refreshGame(gameId).onFailure {
-                _state.value = _state.value.copy(
-                    isLoading = false, 
-                    gameError = GameError.RefreshGameFailed(it.message)
-                )
-            }.onSuccess {
-                _state.value = _state.value.copy(isLoading = false)
-            }
-        }
+        // reconnect manually
+        gameRepository.subscribeToGameUpdates(gameId)
     }
 
     fun submitResults(playerResults: List<PlayerResult>) {
@@ -63,7 +54,7 @@ class GameRoomViewModel(
             _state.value = _state.value.copy(isLoading = true, gameError = null)
             createRoundUseCase.invoke(gameId, state.value.bet, playerResults).onFailure {
                 _state.value = _state.value.copy(
-                    isLoading = false, 
+                    isLoading = false,
                     gameError = GameError.CreateRoundFailed(it.message)
                 )
             }.onSuccess {
@@ -88,10 +79,15 @@ class GameRoomViewModel(
             _navigateToSetup.send(Unit)
         }
     }
+
+    override fun onCleared() {
+        gameRepository.disconnectFromGameUpdates()
+    }
 }
 
 sealed interface GameError {
     val message: String?
+
     data class RefreshGameFailed(override val message: String?) : GameError
     data class CreateRoundFailed(override val message: String?) : GameError
     data class SummitResultError(override val message: String?) : GameError

@@ -3,9 +3,13 @@ package org.hank.botm.data.repository
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
@@ -27,8 +31,10 @@ interface GameRepository {
     val gameWithDetails: Flow<GameWithDetails>
     suspend fun createGame(createGame: CreateGame): Result<Unit>
     suspend fun clearGame()
-    suspend fun refreshGame(id: Int): Result<Unit>
     suspend fun checkGameExists(gameId: Int): Result<Unit>
+    fun subscribeToGameUpdates(gameId: Int)
+    fun disconnectFromGameUpdates()
+
 }
 
 class GameRepositoryImpl(
@@ -39,7 +45,10 @@ class GameRepositoryImpl(
     private val resultDao: ResultDao,
     private val gameApi: GameApi,
     private val ioDispatcher: CoroutineDispatcher,
+    private val applicationScope: CoroutineScope,
 ) : GameRepository {
+    private var gameUpdatesJob: Job? = null
+
     override val game: Flow<Game?> = gameDao.getNewestGame()
         .map { it?.asDomain() }
 
@@ -77,29 +86,6 @@ class GameRepositoryImpl(
         }
     }
 
-    override suspend fun refreshGame(id: Int): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            val gameDetails = gameApi.getGame(id)
-            gameDao.insertGame(gameDetails.game.toEntity())
-            playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
-            val rounds = gameDetails.roundWithResults.map {
-                RoundEntity(
-                    id = it.roundId,
-                    bet = it.bet,
-                    gameId = id
-                )
-            }
-            val results =
-                gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }
-                    .flatten()
-            roundDao.insertRounds(rounds)
-            resultDao.insertResults(results)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher){
         try {
             gameApi.headGame(gameId)
@@ -108,4 +94,35 @@ class GameRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override fun subscribeToGameUpdates(gameId: Int) {
+        // Ensure any existing connection is closed before starting a new one
+        gameUpdatesJob?.cancel()
+
+        // Launch a new coroutine to collect updates without blocking the caller
+        gameUpdatesJob = applicationScope.launch {
+            gameApi.getGameFlow(gameId)
+                .collect { gameDetails ->
+                    gameDao.insertGame(gameDetails.game.toEntity())
+                    playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
+                    val rounds = gameDetails.roundWithResults.map {
+                        RoundEntity(
+                            id = it.roundId,
+                            bet = it.bet,
+                            gameId = gameId
+                        )
+                    }
+                    val results =
+                        gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }
+                            .flatten()
+                    roundDao.insertRounds(rounds)
+                    resultDao.insertResults(results)
+                }
+        }
+    }
+
+    override fun disconnectFromGameUpdates() {
+        gameUpdatesJob?.cancel()
+    }
+
 }
