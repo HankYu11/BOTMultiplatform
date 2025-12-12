@@ -8,9 +8,13 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import org.hank.botm.data.database.ALL_MIGRATIONS
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.network.applyCommonConfiguration
+import platform.Foundation.NSDate
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.timeIntervalSince1970
+
+actual fun currentTimeMillis(): Long = (NSDate().timeIntervalSince1970 * 1000).toLong()
 
 fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
     val dbFilePath = documentDirectory() + "/app_database.db"

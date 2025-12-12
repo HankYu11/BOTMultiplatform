@@ -40,6 +40,12 @@ object Config {
  * Uses negative numbers to distinguish from server-generated positive IDs.
  * Note: No synchronization needed as game creation is sequential via user interaction.
  */
+/**
+ * Get current time in milliseconds.
+ * Platform-specific implementation.
+ */
+expect fun currentTimeMillis(): Long
+
 object OfflineIdGenerator {
     private var gameIdCounter = -1
     private var resultIdCounter = -1
