@@ -29,23 +29,21 @@ object Config {
 /**
  * Generates unique local IDs for offline mode.
  * Uses negative numbers to distinguish from server-generated positive IDs.
+ * Note: No synchronization needed as game creation is sequential via user interaction.
  */
 object OfflineIdGenerator {
     private var gameIdCounter = -1
-    private val lock = Any()
 
     /**
      * Generate a unique game ID for offline mode.
-     * Returns negative integers: -1, -2, -3, etc.
+     * Returns negative integers: -2, -3, -4, etc.
      */
-    fun nextGameId(): Int = synchronized(lock) {
-        gameIdCounter--
-    }
+    fun nextGameId(): Int = --gameIdCounter
 
     /**
      * Generate player IDs for a game.
      * Uses game ID as base to ensure uniqueness across games.
-     * Example: game -1 → players -10, -11, -12, -13
+     * Example: game -2 → players -20, -21, -22, -23
      */
     fun playerIds(gameId: Int): List<Int> {
         val base = gameId * 10
@@ -56,8 +54,6 @@ object OfflineIdGenerator {
      * Reset counters (useful for testing).
      */
     fun reset() {
-        synchronized(lock) {
-            gameIdCounter = -1
-        }
+        gameIdCounter = -1
     }
 }

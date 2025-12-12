@@ -12,11 +12,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.hank.botm.Config
+import org.hank.botm.OfflineIdGenerator
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
 import org.hank.botm.data.database.dao.ResultDao
 import org.hank.botm.data.database.dao.RoundDao
+import org.hank.botm.data.database.model.GameEntity
+import org.hank.botm.data.database.model.PlayerEntity
 import org.hank.botm.data.database.model.RoundEntity
 import org.hank.botm.data.database.model.asDomain
 import org.hank.botm.data.network.api.GameApi
@@ -25,6 +29,7 @@ import org.hank.botm.data.network.model.toEntity
 import org.hank.botm.domain.model.CreateGame
 import org.hank.botm.domain.model.Game
 import org.hank.botm.domain.model.GameWithDetails
+import org.hank.botm.domain.model.getNameByIndex
 import org.hank.botm.domain.model.toDto
 
 interface GameRepository {
@@ -68,20 +73,55 @@ class GameRepositoryImpl(
 
     override suspend fun createGame(createGame: CreateGame): Result<Unit> =
         withContext(ioDispatcher) {
-            val gameWithPlayers: GameWithPlayersDto
-            try {
-                gameWithPlayers = gameApi.createGame(createGame.toDto())
-                appDatabase.useWriterConnection { transactor ->
-                    transactor.immediateTransaction {
-                        gameDao.insertGame(gameWithPlayers.game.toEntity())
-                        playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
-                    }
-                }
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+            if (Config.offlineMode) {
+                createGameOffline(createGame)
+            } else {
+                createGameOnline(createGame)
             }
         }
+
+    private suspend fun createGameOnline(createGame: CreateGame): Result<Unit> {
+        val gameWithPlayers: GameWithPlayersDto
+        return try {
+            gameWithPlayers = gameApi.createGame(createGame.toDto())
+            appDatabase.useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    gameDao.insertGame(gameWithPlayers.game.toEntity())
+                    playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private suspend fun createGameOffline(createGame: CreateGame): Result<Unit> {
+        return try {
+            val gameId = OfflineIdGenerator.nextGameId()
+            val playerIds = OfflineIdGenerator.playerIds(gameId)
+
+            val gameEntity = GameEntity(id = gameId)
+            val playerEntities = playerIds.mapIndexed { index, playerId ->
+                PlayerEntity(
+                    id = playerId,
+                    name = createGame.getNameByIndex(index),
+                    balance = 0,
+                    gameId = gameId
+                )
+            }
+
+            appDatabase.useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    gameDao.insertGame(gameEntity)
+                    playerDao.insertPlayers(playerEntities)
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     override suspend fun clearGame() {
         withContext(ioDispatcher) {
@@ -89,16 +129,31 @@ class GameRepositoryImpl(
         }
     }
 
-    override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher){
-        try {
-            gameApi.headGame(gameId)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher) {
+        if (Config.offlineMode) {
+            // In offline mode, check if game exists in local database
+            val game = gameDao.getGameById(gameId)
+            if (game != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Game with ID $gameId not found in local database"))
+            }
+        } else {
+            try {
+                gameApi.headGame(gameId)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 
     override fun subscribeToGameUpdates(gameId: Int) {
+        // In offline mode, no SSE subscription needed - all data is local
+        if (Config.offlineMode) {
+            return
+        }
+
         // Use applicationScope.launch to handle the mutex lock without blocking
         applicationScope.launch {
             subscriptionMutex.withLock {

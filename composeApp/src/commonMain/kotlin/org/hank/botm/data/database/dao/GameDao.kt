@@ -18,6 +18,9 @@ interface GameDao {
     @Query("SELECT * FROM game ORDER BY id DESC LIMIT 1")
     fun getNewestGameWithDetails(): Flow<GameWithDetailsEntity?>
 
+    @Query("SELECT * FROM game WHERE id = :gameId")
+    suspend fun getGameById(gameId: Int): GameEntity?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGame(gameEntity: GameEntity)
 
