@@ -33,8 +33,12 @@ class CreateRoundUseCase(
                 IllegalArgumentException("The gameResult list size should be 4 but was ${playerResults.size}")
             )
         }
-        
-        val results = convertToResult(playerResults, bet)
+
+        val results = try {
+            convertToResult(playerResults, bet)
+        } catch (e: IllegalArgumentException) {
+            return@withContext kotlin.Result.failure(e)
+        }
         return@withContext roundRepository.insertRound(gameId, bet, results)
     }
     
