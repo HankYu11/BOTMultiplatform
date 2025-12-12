@@ -19,11 +19,20 @@ object Config {
     }
 
     /**
-     * Offline mode toggle.
-     * When true, the app works without a server - all data is stored locally.
-     * Easy to change per user tier or build variant.
+     * Determines if user is eligible for online features.
+     * This can be based on subscription tier, A/B testing, or feature flag.
+     * When false, the app operates in pure offline mode.
+     * Future: Will be determined by user authentication.
      */
-    var offlineMode: Boolean = false
+    var isEligibleForOnline: Boolean = true
+
+    /**
+     * Derived offline mode based on eligibility.
+     * When true, the app works without a server - all data is stored locally.
+     * This is now derived from isEligibleForOnline for backward compatibility.
+     */
+    val offlineMode: Boolean
+        get() = !isEligibleForOnline
 }
 
 /**
