@@ -6,7 +6,7 @@ package org.hank.botm.domain.model
  */
 sealed class AppError(
     val userMessage: String,
-    val cause: Throwable? = null
+    cause: Throwable? = null
 ) : Exception(userMessage, cause) {
 
     /**

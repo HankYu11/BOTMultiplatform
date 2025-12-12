@@ -9,6 +9,9 @@ object Config {
     // temp manual approach for using local environment
     private var environment: Environment = Environment.PROD
 
+    val isDebug: Boolean
+        get() = environment == Environment.DEV
+
     val baseUrl = when (environment) {
         // 10.0.2.2 is the setup for emulator
         Environment.DEV -> "http://10.0.2.2:8080/"

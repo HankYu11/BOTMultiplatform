@@ -10,18 +10,23 @@ import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.hank.botm.Config
+import org.hank.botm.Environment
 import kotlin.time.Duration.Companion.minutes
 
 fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCommonConfiguration() {
     expectSuccess = true
 
     install(Logging) {
-        logger = Logger.DEFAULT
-        level = LogLevel.ALL
-        logger = object: Logger {
+        logger = object : Logger {
             override fun log(message: String) {
+                // Use println for multiplatform logging
+                // In production, this could be replaced with a proper logging framework
+                if (Config.isDebug) {
+                    println("[HTTP] $message")
+                }
             }
         }
+        level = if (Config.isDebug) LogLevel.BODY else LogLevel.NONE
     }
 
     install(SSE)
