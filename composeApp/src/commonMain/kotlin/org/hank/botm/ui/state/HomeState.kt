@@ -1,5 +1,6 @@
 package org.hank.botm.ui.state
 
+import org.hank.botm.domain.GameConstants
 import org.hank.botm.domain.model.GameWithDetails
 import org.hank.botm.ui.viewmodel.GameError
 
@@ -8,8 +9,7 @@ import org.hank.botm.ui.viewmodel.GameError
  */
 data class HomeState(
     val gameWithDetails: GameWithDetails? = null,
-    val bet: Int = 1,
+    val bet: Int = GameConstants.DEFAULT_BET,
     val gameError: GameError? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
 )
