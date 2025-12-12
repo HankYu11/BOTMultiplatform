@@ -5,11 +5,12 @@ import androidx.room.useWriterConnection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
@@ -48,6 +49,7 @@ class GameRepositoryImpl(
     private val applicationScope: CoroutineScope,
 ) : GameRepository {
     private var gameUpdatesJob: Job? = null
+    private val subscriptionMutex = Mutex()
 
     override val game: Flow<Game?> = gameDao.getNewestGame()
         .map { it?.asDomain() }
@@ -96,33 +98,48 @@ class GameRepositoryImpl(
     }
 
     override fun subscribeToGameUpdates(gameId: Int) {
-        // Ensure any existing connection is closed before starting a new one
-        gameUpdatesJob?.cancel()
+        // Use applicationScope.launch to handle the mutex lock without blocking
+        applicationScope.launch {
+            subscriptionMutex.withLock {
+                // Ensure any existing connection is closed before starting a new one
+                gameUpdatesJob?.cancel()
+                gameUpdatesJob?.join() // Wait for the previous job to complete
 
-        // Launch a new coroutine to collect updates without blocking the caller
-        gameUpdatesJob = applicationScope.launch {
-            gameApi.getGameFlow(gameId)
-                .collect { gameDetails ->
-                    gameDao.insertGame(gameDetails.game.toEntity())
-                    playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
-                    val rounds = gameDetails.roundWithResults.map {
-                        RoundEntity(
-                            id = it.roundId,
-                            bet = it.bet,
-                            gameId = gameId
-                        )
-                    }
-                    val results =
-                        gameDetails.roundWithResults.map { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }
-                            .flatten()
-                    roundDao.insertRounds(rounds)
-                    resultDao.insertResults(results)
+                // Launch a new coroutine to collect updates without blocking the caller
+                gameUpdatesJob = applicationScope.launch {
+                    gameApi.getGameFlow(gameId)
+                        .collect { gameDetails ->
+                            // Wrap all database operations in a transaction
+                            appDatabase.useWriterConnection { transactor ->
+                                transactor.immediateTransaction {
+                                    gameDao.insertGame(gameDetails.game.toEntity())
+                                    playerDao.insertPlayers(gameDetails.players.map { it.toEntity() })
+                                    val rounds = gameDetails.roundWithResults.map {
+                                        RoundEntity(
+                                            id = it.roundId,
+                                            bet = it.bet,
+                                            gameId = gameId
+                                        )
+                                    }
+                                    val results = gameDetails.roundWithResults
+                                        .flatMap { gameRounds -> gameRounds.results.map { result -> result.toEntity() } }
+                                    roundDao.insertRounds(rounds)
+                                    resultDao.insertResults(results)
+                                }
+                            }
+                        }
                 }
+            }
         }
     }
 
     override fun disconnectFromGameUpdates() {
-        gameUpdatesJob?.cancel()
+        applicationScope.launch {
+            subscriptionMutex.withLock {
+                gameUpdatesJob?.cancel()
+                gameUpdatesJob = null
+            }
+        }
     }
 
 }
