@@ -18,4 +18,22 @@ interface PlayerDao {
 
     @Query("SELECT * FROM player WHERE gameId = :gameId")
     suspend fun getPlayersByGameId(gameId: Int): List<PlayerEntity>
+
+    // Sync-related queries
+    @Query("UPDATE player SET serverId = :serverId WHERE id = :playerId")
+    suspend fun updateServerId(playerId: Int, serverId: Int)
+
+    @Query("UPDATE player SET balance = :balance WHERE serverId = :serverId")
+    suspend fun updateBalanceByServerId(serverId: Int, balance: Int)
+
+    @Query("SELECT id, serverId FROM player WHERE gameId = :gameId AND serverId IS NOT NULL")
+    suspend fun getIdMappingsByGameId(gameId: Int): List<PlayerIdMapping>
 }
+
+/**
+ * Data class for player ID mappings (local ID to server ID).
+ */
+data class PlayerIdMapping(
+    val id: Int,
+    val serverId: Int
+)
