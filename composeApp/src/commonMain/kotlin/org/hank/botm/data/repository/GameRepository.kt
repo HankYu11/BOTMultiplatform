@@ -60,8 +60,9 @@ class GameRepositoryImpl(
             .map { it.asDomain() }
             .map { gameWithDetails ->
                 // reverse rounds to show the newest first
+                // Use asReversed() for better performance (creates a view instead of a copy)
                 gameWithDetails.copy(
-                    roundsWithResults = gameWithDetails.roundsWithResults.reversed()
+                    roundsWithResults = gameWithDetails.roundsWithResults.asReversed()
                 )
             }
 
