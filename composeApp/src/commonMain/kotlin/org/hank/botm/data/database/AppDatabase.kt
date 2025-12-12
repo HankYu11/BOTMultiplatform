@@ -13,7 +13,7 @@ import org.hank.botm.data.database.model.PlayerEntity
 import org.hank.botm.data.database.model.ResultEntity
 import org.hank.botm.data.database.model.RoundEntity
 
-@Database(entities = [PlayerEntity::class, ResultEntity::class, RoundEntity::class, GameEntity::class], version = 1)
+@Database(entities = [PlayerEntity::class, ResultEntity::class, RoundEntity::class, GameEntity::class], version = 2)
 @ConstructedBy(AppDatabaseFactory::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPlayerDao(): PlayerDao
