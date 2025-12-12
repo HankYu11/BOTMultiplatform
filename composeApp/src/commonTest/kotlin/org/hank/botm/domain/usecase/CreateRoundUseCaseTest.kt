@@ -3,6 +3,7 @@ package org.hank.botm.domain.usecase
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.hank.botm.data.repository.RoundRepository
+import org.hank.botm.domain.GameConstants
 import org.hank.botm.domain.model.Result
 import org.hank.botm.ui.model.PlayerResult
 import kotlin.test.Test
@@ -227,7 +228,7 @@ class CreateRoundUseCaseTest {
         assertTrue(result.isFailure)
         val exception = result.exceptionOrNull()
         assertTrue(exception is IllegalArgumentException)
-        assertTrue(exception?.message?.contains("4") == true)
+        assertTrue(exception?.message?.contains("${GameConstants.PLAYER_COUNT}") == true)
     }
 
     @Test

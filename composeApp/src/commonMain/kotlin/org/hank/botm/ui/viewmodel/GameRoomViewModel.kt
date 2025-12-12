@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.hank.botm.data.repository.GameRepository
+import org.hank.botm.domain.GameConstants
 import org.hank.botm.domain.usecase.CreateRoundUseCase
 import org.hank.botm.ui.GameRoom
 import org.hank.botm.ui.model.PlayerResult
@@ -43,9 +44,9 @@ class GameRoomViewModel(
     }
 
     fun submitResults(playerResults: List<PlayerResult>) {
-        if (playerResults.size != 4) {
+        if (playerResults.size != GameConstants.PLAYER_COUNT) {
             _state.value = _state.value.copy(
-                gameError = GameError.SummitResultError("The gameResult list size should be 4 but was ${playerResults.size}")
+                gameError = GameError.SummitResultError("Expected ${GameConstants.PLAYER_COUNT} players but got ${playerResults.size}")
             )
             return
         }

@@ -3,6 +3,7 @@ package org.hank.botm.domain.usecase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.hank.botm.data.repository.RoundRepository
+import org.hank.botm.domain.GameConstants
 import org.hank.botm.domain.model.Result
 import org.hank.botm.ui.model.PlayerResult
 
@@ -28,9 +29,9 @@ class CreateRoundUseCase(
         bet: Int,
         playerResults: List<PlayerResult>
     ): kotlin.Result<Unit> = withContext(ioDispatcher) {
-        if (playerResults.size != 4) {
+        if (playerResults.size != GameConstants.PLAYER_COUNT) {
             return@withContext kotlin.Result.failure(
-                IllegalArgumentException("The gameResult list size should be 4 but was ${playerResults.size}")
+                IllegalArgumentException("Expected ${GameConstants.PLAYER_COUNT} players but got ${playerResults.size}")
             )
         }
 
