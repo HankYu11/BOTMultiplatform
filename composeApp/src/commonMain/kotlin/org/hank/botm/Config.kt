@@ -17,4 +17,47 @@ object Config {
         Environment.DEV -> "http://10.0.2.2:8080/"
         Environment.PROD -> "https://botktor-production.up.railway.app/"
     }
+
+    /**
+     * Offline mode toggle.
+     * When true, the app works without a server - all data is stored locally.
+     * Easy to change per user tier or build variant.
+     */
+    var offlineMode: Boolean = false
+}
+
+/**
+ * Generates unique local IDs for offline mode.
+ * Uses negative numbers to distinguish from server-generated positive IDs.
+ */
+object OfflineIdGenerator {
+    private var gameIdCounter = -1
+    private val lock = Any()
+
+    /**
+     * Generate a unique game ID for offline mode.
+     * Returns negative integers: -1, -2, -3, etc.
+     */
+    fun nextGameId(): Int = synchronized(lock) {
+        gameIdCounter--
+    }
+
+    /**
+     * Generate player IDs for a game.
+     * Uses game ID as base to ensure uniqueness across games.
+     * Example: game -1 → players -10, -11, -12, -13
+     */
+    fun playerIds(gameId: Int): List<Int> {
+        val base = gameId * 10
+        return (0 until 4).map { base - it }
+    }
+
+    /**
+     * Reset counters (useful for testing).
+     */
+    fun reset() {
+        synchronized(lock) {
+            gameIdCounter = -1
+        }
+    }
 }
