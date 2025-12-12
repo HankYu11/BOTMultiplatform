@@ -33,6 +33,7 @@ object Config {
  */
 object OfflineIdGenerator {
     private var gameIdCounter = -1
+    private var resultIdCounter = -1
 
     /**
      * Generate a unique game ID for offline mode.
@@ -51,9 +52,16 @@ object OfflineIdGenerator {
     }
 
     /**
+     * Generate a unique result ID for offline mode.
+     * Returns negative integers: -2, -3, -4, etc.
+     */
+    fun nextResultId(): Int = --resultIdCounter
+
+    /**
      * Reset counters (useful for testing).
      */
     fun reset() {
         gameIdCounter = -1
+        resultIdCounter = -1
     }
 }

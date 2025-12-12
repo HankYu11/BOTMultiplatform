@@ -15,4 +15,7 @@ interface PlayerDao {
 
     @Update
     suspend fun updatePlayers(players: List<PlayerEntity>)
+
+    @Query("SELECT * FROM player WHERE gameId = :gameId")
+    suspend fun getPlayersByGameId(gameId: Int): List<PlayerEntity>
 }
