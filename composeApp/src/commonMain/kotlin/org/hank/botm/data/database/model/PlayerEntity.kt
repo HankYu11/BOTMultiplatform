@@ -16,7 +16,7 @@ import org.hank.botm.domain.model.Player
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["gameId"]), Index(value = ["serverId"])]
+    indices = [Index(value = ["gameId"])]
 )
 data class PlayerEntity(
     @PrimaryKey(autoGenerate = true)
@@ -24,9 +24,6 @@ data class PlayerEntity(
     val name: String,
     val balance: Int,
     val gameId: Int,
-    // Sync tracking fields
-    val serverId: Int? = null,
-    val isDirty: Boolean = false,
 )
 
 fun PlayerEntity.asDomain() = Player(

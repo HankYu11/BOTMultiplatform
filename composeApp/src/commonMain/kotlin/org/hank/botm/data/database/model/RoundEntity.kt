@@ -14,15 +14,13 @@ import org.hank.botm.domain.model.Round
         childColumns = ["gameId"],
         onDelete = ForeignKey.CASCADE
     )],
-    indices = [Index(value = ["gameId"]), Index(value = ["serverId"])]
+    indices = [Index(value = ["gameId"])]
 )
 data class RoundEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val bet: Int = 1,
     val gameId: Int,
-    // Sync tracking fields
-    val serverId: Int? = null,
     val isDirty: Boolean = false,
 )
 

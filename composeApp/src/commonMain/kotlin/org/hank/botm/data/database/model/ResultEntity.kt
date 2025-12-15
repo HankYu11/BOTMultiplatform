@@ -22,7 +22,7 @@ import org.hank.botm.domain.model.Result
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["roundId"]), Index(value = ["playerId"]), Index(value = ["serverId"])]
+    indices = [Index(value = ["roundId"]), Index(value = ["playerId"])]
 )
 data class ResultEntity(
     @PrimaryKey(autoGenerate = true)
@@ -30,9 +30,6 @@ data class ResultEntity(
     val roundId: Int,
     val playerId: Int,
     val profit: Int,
-    // Sync tracking fields
-    val serverId: Int? = null,
-    val isDirty: Boolean = false,
 )
 
 fun ResultEntity.asDomain() = Result(
