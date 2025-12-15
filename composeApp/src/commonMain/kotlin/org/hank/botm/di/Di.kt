@@ -16,6 +16,10 @@ import org.hank.botm.data.repository.GameRepository
 import org.hank.botm.data.repository.GameRepositoryImpl
 import org.hank.botm.data.repository.RoundRepository
 import org.hank.botm.data.repository.RoundRepositoryImpl
+import org.hank.botm.data.sync.ConnectivityChecker
+import org.hank.botm.data.sync.ConnectivityCheckerImpl
+import org.hank.botm.data.sync.SyncManager
+import org.hank.botm.data.sync.SyncManagerImpl
 import org.hank.botm.domain.usecase.CreateRoundUseCase
 import org.hank.botm.ui.viewmodel.LobbyViewModel
 import org.hank.botm.ui.viewmodel.GameRoomViewModel
@@ -43,6 +47,7 @@ fun initKoinIos() = initKoin(appDeclaration = {})
 fun commonModule(): Module = module {
     includes(
         daoModule(),
+        syncModule(),
         repositoryModule(),
         dispatcherModule(),
         viewModelModule(),
@@ -62,16 +67,21 @@ private fun daoModule(): Module = module {
 private fun repositoryModule(): Module = module {
     single<GameRepository> {
         GameRepositoryImpl(
-            get(), get(), get(), get(), get(), get(),
+            get(), get(), get(), get(), get(), get(), get(),
             get(named("IoDispatcher")),
             get(named("ApplicationScope")),
         )
     }
-    single<RoundRepository> { RoundRepositoryImpl(get(), get(), get(), get(), get(), get(named("IoDispatcher"))) }
+    single<RoundRepository> {
+        RoundRepositoryImpl(
+            get(), get(), get(), get(), get(), get(), get(),
+            get(named("IoDispatcher"))
+        )
+    }
 }
 
 private fun viewModelModule(): Module = module {
-    viewModel { SplashViewModel(get()) }
+    viewModel { SplashViewModel(get(), get()) }
     viewModel { GameRoomViewModel(get(), get(), get()) }
     viewModel { SetupViewModel(get()) }
     viewModel { LobbyViewModel(get()) }
@@ -90,6 +100,16 @@ private fun dispatcherModule(): Module = module {
 private fun networkModule(): Module = module {
     single<GameApi> { GameApiImpl(get()) }
     single<RoundApi> { RoundApi(get()) }
+}
+
+private fun syncModule(): Module = module {
+    single<ConnectivityChecker> { ConnectivityCheckerImpl(get()) }
+    single<SyncManager> {
+        SyncManagerImpl(
+            get(), get(), get(), get(), get(), get(), get(), get(),
+            get(named("IoDispatcher"))
+        )
+    }
 }
 
 // It holds db and httpClient

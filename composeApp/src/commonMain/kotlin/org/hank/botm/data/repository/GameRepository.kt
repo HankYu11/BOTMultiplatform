@@ -13,7 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.hank.botm.Config
-import org.hank.botm.OfflineIdGenerator
+import org.hank.botm.currentTimeMillis
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
@@ -24,8 +24,8 @@ import org.hank.botm.data.database.model.PlayerEntity
 import org.hank.botm.data.database.model.RoundEntity
 import org.hank.botm.data.database.model.asDomain
 import org.hank.botm.data.network.api.GameApi
-import org.hank.botm.data.network.model.GameWithPlayersDto
 import org.hank.botm.data.network.model.toEntity
+import org.hank.botm.data.sync.SyncManager
 import org.hank.botm.domain.model.CreateGame
 import org.hank.botm.domain.model.Game
 import org.hank.botm.domain.model.GameWithDetails
@@ -50,6 +50,7 @@ class GameRepositoryImpl(
     private val roundDao: RoundDao,
     private val resultDao: ResultDao,
     private val gameApi: GameApi,
+    private val syncManager: SyncManager,
     private val ioDispatcher: CoroutineDispatcher,
     private val applicationScope: CoroutineScope,
 ) : GameRepository {
@@ -73,21 +74,54 @@ class GameRepositoryImpl(
 
     override suspend fun createGame(createGame: CreateGame): Result<Unit> =
         withContext(ioDispatcher) {
-            if (Config.offlineMode) {
-                createGameOffline(createGame)
-            } else {
-                createGameOnline(createGame)
+            when {
+                // Pure offline mode - not eligible for online
+                !Config.isEligibleForOnline -> {
+                    createGameOffline(createGame, isDirty = false)
+                }
+                // Eligible and connected - try online first
+                syncManager.canUseOnline() -> {
+                    createGameOnline(createGame).recoverCatching {
+                        // Fallback to offline with dirty flag if online fails
+                        createGameOffline(createGame, isDirty = true).getOrThrow()
+                    }
+                }
+                // Eligible but not connected - save locally with dirty flag
+                else -> {
+                    createGameOffline(createGame, isDirty = true)
+                }
             }
         }
 
     private suspend fun createGameOnline(createGame: CreateGame): Result<Unit> {
-        val gameWithPlayers: GameWithPlayersDto
         return try {
-            gameWithPlayers = gameApi.createGame(createGame.toDto())
+            val gameWithPlayers = gameApi.createGame(createGame.toDto())
+            val now = currentTimeMillis()
+
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    gameDao.insertGame(gameWithPlayers.game.toEntity())
-                    playerDao.insertPlayers(gameWithPlayers.players.map { it.toEntity() })
+                    // Create game entity with server ID and sync status
+                    val gameEntity = GameEntity(
+                        id = gameWithPlayers.game.id,
+                        serverId = gameWithPlayers.game.id,
+                        isDirty = false,
+                        lastSyncedAt = now,
+                        createdAt = now
+                    )
+                    gameDao.insertGame(gameEntity)
+
+                    // Create player entities with server IDs
+                    val playerEntities = gameWithPlayers.players.map { dto ->
+                        PlayerEntity(
+                            id = dto.id,
+                            name = dto.name,
+                            balance = dto.balance,
+                            gameId = dto.gameId,
+                            serverId = dto.id,
+                            isDirty = false
+                        )
+                    }
+                    playerDao.insertPlayers(playerEntities)
                 }
             }
             Result.success(Unit)
@@ -96,24 +130,29 @@ class GameRepositoryImpl(
         }
     }
 
-    private suspend fun createGameOffline(createGame: CreateGame): Result<Unit> {
+    private suspend fun createGameOffline(createGame: CreateGame, isDirty: Boolean): Result<Unit> {
         return try {
-            val gameId = OfflineIdGenerator.nextGameId()
-            val playerIds = OfflineIdGenerator.playerIds(gameId)
+            val now = currentTimeMillis()
 
-            val gameEntity = GameEntity(id = gameId)
-            val playerEntities = playerIds.mapIndexed { index, playerId ->
-                PlayerEntity(
-                    id = playerId,
-                    name = createGame.getNameByIndex(index),
-                    balance = 0,
-                    gameId = gameId
-                )
-            }
+            // Create game entity (Room will autoGenerate ID)
+            val gameEntity = GameEntity(
+                isDirty = isDirty,
+                createdAt = now
+            )
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    gameDao.insertGame(gameEntity)
+                    val gameId = gameDao.insertGameAndGetId(gameEntity).toInt()
+
+                    // Create player entities
+                    val playerEntities = (0 until 4).map { index ->
+                        PlayerEntity(
+                            name = createGame.getNameByIndex(index),
+                            balance = 0,
+                            gameId = gameId,
+                            isDirty = isDirty
+                        )
+                    }
                     playerDao.insertPlayers(playerEntities)
                 }
             }
@@ -130,27 +169,29 @@ class GameRepositoryImpl(
     }
 
     override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher) {
-        if (Config.offlineMode) {
-            // In offline mode, check if game exists in local database
-            val game = gameDao.getGameById(gameId)
-            if (game != null) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Game with ID $gameId not found in local database"))
-            }
-        } else {
-            try {
-                gameApi.headGame(gameId)
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+        // First check local database
+        val localGame = gameDao.getGameById(gameId)
+        if (localGame != null) {
+            return@withContext Result.success(Unit)
+        }
+
+        // If not eligible for online or not connected, fail
+        if (!Config.isEligibleForOnline || !syncManager.canUseOnline()) {
+            return@withContext Result.failure(Exception("Game with ID $gameId not found in local database"))
+        }
+
+        // Try to check on server
+        try {
+            gameApi.headGame(gameId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     override fun subscribeToGameUpdates(gameId: Int) {
-        // In offline mode, no SSE subscription needed - all data is local
-        if (Config.offlineMode) {
+        // Skip SSE if not eligible for online or not connected
+        if (!Config.isEligibleForOnline || !syncManager.canUseOnline()) {
             return
         }
 
