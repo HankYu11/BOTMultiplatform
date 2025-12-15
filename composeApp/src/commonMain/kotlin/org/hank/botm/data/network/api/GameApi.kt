@@ -15,12 +15,20 @@ import org.hank.botm.Config
 import org.hank.botm.data.network.model.CreateGameDto
 import org.hank.botm.data.network.model.GameDetailsDto
 import org.hank.botm.data.network.model.GameWithPlayersDto
+import org.hank.botm.data.network.model.SyncGameRequest
 
 interface GameApi {
     suspend fun createGame(createGameDto: CreateGameDto): GameWithPlayersDto
     suspend fun getGame(id: Int): GameDetailsDto
     suspend fun headGame(id: Int)
     fun getGameFlow(id: Int): Flow<GameDetailsDto>
+
+    /**
+     * Sync a complete offline game to the server.
+     * Creates the game with all players, rounds, and results.
+     * Returns the complete game data with server-generated IDs.
+     */
+    suspend fun syncGame(request: SyncGameRequest): GameDetailsDto
 }
 
 class GameApiImpl(
@@ -39,6 +47,12 @@ class GameApiImpl(
 
     override suspend fun headGame(id: Int) {
         httpClient.head("game/$id")
+    }
+
+    override suspend fun syncGame(request: SyncGameRequest): GameDetailsDto {
+        return httpClient.post("game/sync") {
+            setBody(request)
+        }.body()
     }
 
     override fun getGameFlow(id: Int): Flow<GameDetailsDto> = channelFlow {
