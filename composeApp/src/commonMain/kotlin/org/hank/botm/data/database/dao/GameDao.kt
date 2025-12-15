@@ -21,9 +21,6 @@ interface GameDao {
     @Query("SELECT * FROM game WHERE id = :gameId")
     suspend fun getGameById(gameId: Int): GameEntity?
 
-    @Query("SELECT * FROM game WHERE serverId = :serverId")
-    suspend fun getGameByServerId(serverId: Int): GameEntity?
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGame(gameEntity: GameEntity)
 
@@ -38,18 +35,15 @@ interface GameDao {
     @Query("SELECT * FROM game WHERE isDirty = 1")
     suspend fun getDirtyGames(): List<GameEntity>
 
-    @Query("SELECT * FROM game WHERE serverId IS NOT NULL")
-    suspend fun getSyncedGames(): List<GameEntity>
-
     @Query("UPDATE game SET isDirty = 1 WHERE id = :gameId")
     suspend fun markDirty(gameId: Int)
 
     @Query("UPDATE game SET isDirty = 0 WHERE id = :gameId")
     suspend fun clearDirtyFlag(gameId: Int)
 
-    @Query("UPDATE game SET serverId = :serverId WHERE id = :gameId")
-    suspend fun updateServerId(gameId: Int, serverId: Int)
-
     @Query("UPDATE game SET lastSyncedAt = :timestamp WHERE id = :gameId")
     suspend fun updateLastSyncedAt(gameId: Int, timestamp: Long)
+
+    @Query("DELETE FROM game WHERE id = :gameId")
+    suspend fun deleteById(gameId: Int)
 }
