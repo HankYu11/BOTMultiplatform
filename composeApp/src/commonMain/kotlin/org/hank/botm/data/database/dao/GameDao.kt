@@ -21,6 +21,9 @@ interface GameDao {
     @Query("SELECT * FROM game WHERE id = :gameId")
     suspend fun getGameById(gameId: Int): GameEntity?
 
+    @Query("SELECT * FROM game WHERE serverId = :serverId")
+    suspend fun getGameByServerId(serverId: Int): GameEntity?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGame(gameEntity: GameEntity)
 

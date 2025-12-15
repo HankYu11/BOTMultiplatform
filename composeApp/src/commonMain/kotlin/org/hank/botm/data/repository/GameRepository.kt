@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.hank.botm.Config
+import org.hank.botm.OfflineIdGenerator
 import org.hank.botm.currentTimeMillis
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
@@ -134,19 +135,23 @@ class GameRepositoryImpl(
         return try {
             val now = currentTimeMillis()
 
-            // Create game entity (Room will autoGenerate ID)
+            // Generate negative ID for offline game to avoid conflicts with server IDs
+            val gameId = OfflineIdGenerator.nextId()
+
             val gameEntity = GameEntity(
+                id = gameId,
                 isDirty = isDirty,
                 createdAt = now
             )
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    val gameId = gameDao.insertGameAndGetId(gameEntity).toInt()
+                    gameDao.insertGame(gameEntity)
 
-                    // Create player entities
+                    // Create player entities with negative IDs
                     val playerEntities = (0 until 4).map { index ->
                         PlayerEntity(
+                            id = OfflineIdGenerator.nextId(),
                             name = createGame.getNameByIndex(index),
                             balance = 0,
                             gameId = gameId,
@@ -169,24 +174,33 @@ class GameRepositoryImpl(
     }
 
     override suspend fun checkGameExists(gameId: Int): Result<Unit> = withContext(ioDispatcher) {
-        // First check local database
-        val localGame = gameDao.getGameById(gameId)
-        if (localGame != null) {
+        // Step 1: If eligible for online and connected, try server first
+        // This ensures we get the authoritative state from server
+        if (Config.isEligibleForOnline && syncManager.canUseOnline()) {
+            try {
+                gameApi.headGame(gameId)
+                return@withContext Result.success(Unit)
+            } catch (e: Exception) {
+                // Server check failed, continue to local checks
+                if (Config.isDebug) {
+                    println("[GameRepository] Server check failed for game $gameId: ${e.message}")
+                }
+            }
+        }
+
+        // Step 2: Check local database by id (primary key)
+        if (gameDao.getGameById(gameId) != null) {
             return@withContext Result.success(Unit)
         }
 
-        // If not eligible for online or not connected, fail
-        if (!Config.isEligibleForOnline || !syncManager.canUseOnline()) {
-            return@withContext Result.failure(Exception("Game with ID $gameId not found in local database"))
+        // Step 3: Check local database by serverId
+        // Handles case where we have a local game synced from server
+        if (gameDao.getGameByServerId(gameId) != null) {
+            return@withContext Result.success(Unit)
         }
 
-        // Try to check on server
-        try {
-            gameApi.headGame(gameId)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        // Not found anywhere
+        Result.failure(Exception("Game with ID $gameId not found"))
     }
 
     override fun subscribeToGameUpdates(gameId: Int) {

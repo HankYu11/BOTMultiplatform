@@ -5,6 +5,7 @@ import androidx.room.useWriterConnection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.hank.botm.Config
+import org.hank.botm.OfflineIdGenerator
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
@@ -110,8 +111,11 @@ class RoundRepositoryImpl(
             // Get current players to update their balances
             val currentPlayers = playerDao.getPlayersByGameId(gameId)
 
-            // Create round entity (Room will autoGenerate the ID)
+            // Generate negative ID for offline round to avoid conflicts with server IDs
+            val roundId = OfflineIdGenerator.nextId()
+
             val roundEntity = RoundEntity(
+                id = roundId,
                 bet = bet,
                 gameId = gameId,
                 isDirty = isDirty
@@ -119,12 +123,12 @@ class RoundRepositoryImpl(
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    // Insert round and get generated ID
-                    val roundId = roundDao.insertRound(roundEntity).toInt()
+                    roundDao.insertRound(roundEntity)
 
-                    // Create result entities
+                    // Create result entities with negative IDs
                     val resultEntities = results.map { result ->
                         ResultEntity(
+                            id = OfflineIdGenerator.nextId(),
                             roundId = roundId,
                             playerId = result.playerId,
                             profit = result.profit,

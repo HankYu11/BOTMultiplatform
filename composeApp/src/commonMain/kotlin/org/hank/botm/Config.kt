@@ -28,6 +28,38 @@ object Config {
 }
 
 /**
+ * Generates unique local IDs for offline mode.
+ * Uses negative numbers to distinguish from server-generated positive IDs.
+ *
+ * ID Ranges:
+ * - Server IDs: Positive (1, 2, 3, ...)
+ * - Offline IDs: Negative (-1, -2, -3, ...)
+ *
+ * This ensures offline-created entities never conflict with server entities.
+ */
+object OfflineIdGenerator {
+    private var idCounter = 0
+    private val lock = Any()
+
+    /**
+     * Generate a unique negative ID for offline entities.
+     * Returns negative integers: -1, -2, -3, etc.
+     * Thread-safe using synchronized block.
+     */
+    fun nextId(): Int = synchronized(lock) { --idCounter }
+
+    /**
+     * Check if an ID is an offline-generated ID (negative).
+     */
+    fun isOfflineId(id: Int): Boolean = id < 0
+
+    /**
+     * Reset counter (useful for testing).
+     */
+    fun reset() = synchronized(lock) { idCounter = 0 }
+}
+
+/**
  * Get current time in milliseconds.
  * Platform-specific implementation.
  */
