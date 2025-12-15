@@ -5,7 +5,6 @@ import androidx.room.useWriterConnection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.hank.botm.Config
-import org.hank.botm.OfflineIdGenerator
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
 import org.hank.botm.data.database.dao.PlayerDao
@@ -67,12 +66,11 @@ class RoundRepositoryImpl(
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    // Round entity with server ID
+                    // Round entity with server ID (id = serverId in new model)
                     val roundEntity = RoundEntity(
                         id = roundDetails.round.id,
                         bet = roundDetails.round.bet,
                         gameId = roundDetails.round.gameId,
-                        serverId = roundDetails.round.id,
                         isDirty = false
                     )
                     roundDao.insertRound(roundEntity)
@@ -87,9 +85,7 @@ class RoundRepositoryImpl(
                             id = dto.id,
                             roundId = dto.roundId,
                             playerId = dto.playerId,
-                            profit = dto.profit,
-                            serverId = dto.id,
-                            isDirty = false
+                            profit = dto.profit
                         )
                     }
                     resultDao.insertResults(resultEntities)
@@ -111,11 +107,9 @@ class RoundRepositoryImpl(
             // Get current players to update their balances
             val currentPlayers = playerDao.getPlayersByGameId(gameId)
 
-            // Generate negative ID for offline round to avoid conflicts with server IDs
-            val roundId = OfflineIdGenerator.nextId()
-
+            // Use Room autoGenerate - id = 0 tells Room to generate
             val roundEntity = RoundEntity(
-                id = roundId,
+                id = 0,
                 bet = bet,
                 gameId = gameId,
                 isDirty = isDirty
@@ -123,26 +117,23 @@ class RoundRepositoryImpl(
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    roundDao.insertRound(roundEntity)
+                    // Insert and get generated ID
+                    val roundId = roundDao.insertRound(roundEntity).toInt()
 
-                    // Create result entities with negative IDs
+                    // Create result entities - Room will autoGenerate IDs
                     val resultEntities = results.map { result ->
                         ResultEntity(
-                            id = OfflineIdGenerator.nextId(),
+                            id = 0,
                             roundId = roundId,
                             playerId = result.playerId,
-                            profit = result.profit,
-                            isDirty = isDirty
+                            profit = result.profit
                         )
                     }
 
                     // Update player balances based on profits
                     val updatedPlayers = currentPlayers.map { player ->
                         val profit = results.find { it.playerId == player.id }?.profit ?: 0
-                        player.copy(
-                            balance = player.balance + profit,
-                            isDirty = isDirty
-                        )
+                        player.copy(balance = player.balance + profit)
                     }
 
                     playerDao.updatePlayers(updatedPlayers)

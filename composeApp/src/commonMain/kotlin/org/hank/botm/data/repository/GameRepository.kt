@@ -13,7 +13,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.hank.botm.Config
-import org.hank.botm.OfflineIdGenerator
 import org.hank.botm.currentTimeMillis
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.database.dao.GameDao
@@ -101,10 +100,9 @@ class GameRepositoryImpl(
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    // Create game entity with server ID and sync status
+                    // Create game entity with server ID (id = serverId in new model)
                     val gameEntity = GameEntity(
                         id = gameWithPlayers.game.id,
-                        serverId = gameWithPlayers.game.id,
                         isDirty = false,
                         lastSyncedAt = now,
                         createdAt = now
@@ -117,9 +115,7 @@ class GameRepositoryImpl(
                             id = dto.id,
                             name = dto.name,
                             balance = dto.balance,
-                            gameId = dto.gameId,
-                            serverId = dto.id,
-                            isDirty = false
+                            gameId = dto.gameId
                         )
                     }
                     playerDao.insertPlayers(playerEntities)
@@ -135,27 +131,25 @@ class GameRepositoryImpl(
         return try {
             val now = currentTimeMillis()
 
-            // Generate negative ID for offline game to avoid conflicts with server IDs
-            val gameId = OfflineIdGenerator.nextId()
-
+            // Use Room autoGenerate - id = 0 tells Room to generate
             val gameEntity = GameEntity(
-                id = gameId,
+                id = 0,
                 isDirty = isDirty,
                 createdAt = now
             )
 
             appDatabase.useWriterConnection { transactor ->
                 transactor.immediateTransaction {
-                    gameDao.insertGame(gameEntity)
+                    // Insert and get generated ID
+                    val gameId = gameDao.insertGameAndGetId(gameEntity).toInt()
 
-                    // Create player entities with negative IDs
+                    // Create player entities - Room will autoGenerate IDs
                     val playerEntities = (0 until 4).map { index ->
                         PlayerEntity(
-                            id = OfflineIdGenerator.nextId(),
+                            id = 0,
                             name = createGame.getNameByIndex(index),
                             balance = 0,
-                            gameId = gameId,
-                            isDirty = isDirty
+                            gameId = gameId
                         )
                     }
                     playerDao.insertPlayers(playerEntities)
@@ -189,13 +183,8 @@ class GameRepositoryImpl(
         }
 
         // Step 2: Check local database by id (primary key)
+        // In the new model, id = serverId after sync
         if (gameDao.getGameById(gameId) != null) {
-            return@withContext Result.success(Unit)
-        }
-
-        // Step 3: Check local database by serverId
-        // Handles case where we have a local game synced from server
-        if (gameDao.getGameByServerId(gameId) != null) {
             return@withContext Result.success(Unit)
         }
 
