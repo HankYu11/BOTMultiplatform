@@ -3,7 +3,9 @@ package org.hank.botm.ui.viewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -56,6 +58,9 @@ class SplashViewModelTest {
 
         private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Unknown)
         override val connectionState: StateFlow<ConnectionState> = _connectionState
+
+        private val _gameIdChanged = MutableSharedFlow<Pair<Int, Int>>()
+        override val gameIdChanged: SharedFlow<Pair<Int, Int>> = _gameIdChanged
 
         var performSyncCalled = false
         var syncResult: Result<Unit> = Result.success(Unit)
@@ -223,8 +228,8 @@ class SplashViewModelTest {
     }
 
     @Test
-    fun `handles negative game IDs - offline games`() = runTest(testDispatcher) {
-        val offlineGame = Game(id = -5) // Offline-generated negative ID
+    fun `handles any game ID values`() = runTest(testDispatcher) {
+        val offlineGame = Game(id = 99) // Any auto-generated ID
         val fakeRepository = FakeGameRepository(existingGame = offlineGame)
         val fakeSyncManager = FakeSyncManager()
         Config.isEligibleForOnline = false
@@ -236,6 +241,6 @@ class SplashViewModelTest {
 
         val destination = viewModel.startDestination.value
         assertIs<GameRoom>(destination)
-        assertEquals(-5, destination.gameId)
+        assertEquals(99, destination.gameId)
     }
 }

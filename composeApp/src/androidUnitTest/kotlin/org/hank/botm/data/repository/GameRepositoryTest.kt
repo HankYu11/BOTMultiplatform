@@ -123,28 +123,10 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `checkGameExists returns success when local game exists by serverId`() = runTest(testDispatcher) {
-        // Given: Offline mode, game not found by id but found by serverId
-        Config.isEligibleForOnline = false
-        coEvery { gameDao.getGameById(42) } returns null
-        val gameEntity = GameEntity(id = -1, serverId = 42, createdAt = 0L)
-        coEvery { gameDao.getGameByServerId(42) } returns gameEntity
-
-        // When
-        val result = repository.checkGameExists(42)
-
-        // Then
-        assertTrue(result.isSuccess)
-        coVerify { gameDao.getGameById(42) }
-        coVerify { gameDao.getGameByServerId(42) }
-    }
-
-    @Test
     fun `checkGameExists returns failure when game not found anywhere`() = runTest(testDispatcher) {
         // Given: Offline mode, game not found anywhere
         Config.isEligibleForOnline = false
         coEvery { gameDao.getGameById(999) } returns null
-        coEvery { gameDao.getGameByServerId(999) } returns null
 
         // When
         val result = repository.checkGameExists(999)

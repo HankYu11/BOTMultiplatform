@@ -1,6 +1,8 @@
 package org.hank.botm.data.sync
 
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -34,6 +36,9 @@ class SyncManagerTest {
 
         private val _connectionState = MutableStateFlow(connectionStateValue)
         override val connectionState: StateFlow<ConnectionState> = _connectionState
+
+        private val _gameIdChanged = MutableSharedFlow<Pair<Int, Int>>()
+        override val gameIdChanged: SharedFlow<Pair<Int, Int>> = _gameIdChanged
 
         var performSyncCalled = false
         var performSyncResult: Result<Unit> = Result.success(Unit)
