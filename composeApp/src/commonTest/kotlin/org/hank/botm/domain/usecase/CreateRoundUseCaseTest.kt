@@ -120,7 +120,7 @@ class CreateRoundUseCaseTest {
     }
 
     @Test
-    fun `profit sum equals zero (zero-sum game)`() = runTest(testDispatcher) {
+    fun `profit sum equals zero - zero-sum game`() = runTest(testDispatcher) {
         val fakeRepository = FakeRoundRepository()
         val useCase = CreateRoundUseCase(fakeRepository, testDispatcher)
 
@@ -189,7 +189,7 @@ class CreateRoundUseCaseTest {
     }
 
     @Test
-    fun `maximum cards scenario (all losers have 13 cards)`() = runTest(testDispatcher) {
+    fun `maximum cards scenario - all losers have 13 cards`() = runTest(testDispatcher) {
         val fakeRepository = FakeRoundRepository()
         val useCase = CreateRoundUseCase(fakeRepository, testDispatcher)
 

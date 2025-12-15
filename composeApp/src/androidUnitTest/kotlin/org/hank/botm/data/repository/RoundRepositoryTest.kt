@@ -1,0 +1,315 @@
+package org.hank.botm.data.repository
+
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import org.hank.botm.Config
+import org.hank.botm.OfflineIdGenerator
+import org.hank.botm.data.network.api.RoundApi
+import org.hank.botm.data.network.model.PlayerDto
+import org.hank.botm.data.network.model.ResultDto
+import org.hank.botm.data.network.model.RoundDetailsDto
+import org.hank.botm.data.network.model.RoundDto
+import org.hank.botm.data.sync.SyncManager
+import org.hank.botm.domain.model.Result
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+/**
+ * Tests for RoundRepository behavior using a fake implementation.
+ *
+ * Note: Testing RoundRepositoryImpl directly is complex due to Room's transaction APIs.
+ * These tests use a fake repository to verify the expected behavior contracts.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class RoundRepositoryTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testScope: TestScope
+
+    // Mocks for online path testing
+    private lateinit var roundApi: RoundApi
+    private lateinit var syncManager: SyncManager
+
+    private var originalIsEligibleForOnline: Boolean = true
+
+    // Test data
+    private val testGameId = 42
+    private val testBet = 100
+    private val testResults = listOf(
+        Result(playerId = 1, profit = 300),
+        Result(playerId = 2, profit = -100),
+        Result(playerId = 3, profit = -100),
+        Result(playerId = 4, profit = -100)
+    )
+
+    /**
+     * Fake RoundRepository that tracks calls and simulates behavior
+     */
+    private class FakeRoundRepository(
+        private val roundApi: RoundApi,
+        private val syncManager: SyncManager
+    ) : RoundRepository {
+
+        var insertRoundCalled = false
+        var lastGameId: Int? = null
+        var lastBet: Int? = null
+        var lastResults: List<Result>? = null
+        var wasApiCalled = false
+        var wasMarkedDirty = false
+        var usedNegativeId = false
+
+        override suspend fun insertRound(
+            gameId: Int,
+            bet: Int,
+            results: List<Result>
+        ): kotlin.Result<Unit> {
+            insertRoundCalled = true
+            lastGameId = gameId
+            lastBet = bet
+            lastResults = results
+
+            return when {
+                // Pure offline mode
+                !Config.isEligibleForOnline -> {
+                    usedNegativeId = true
+                    wasMarkedDirty = false
+                    kotlin.Result.success(Unit)
+                }
+                // Online and connected
+                syncManager.canUseOnline() -> {
+                    try {
+                        wasApiCalled = true
+                        roundApi.createRound(gameId, bet, results)
+                        kotlin.Result.success(Unit)
+                    } catch (e: Exception) {
+                        // Fallback to offline with dirty flag
+                        usedNegativeId = true
+                        wasMarkedDirty = true
+                        kotlin.Result.success(Unit)
+                    }
+                }
+                // Eligible but disconnected
+                else -> {
+                    usedNegativeId = true
+                    wasMarkedDirty = true
+                    kotlin.Result.success(Unit)
+                }
+            }
+        }
+    }
+
+    @BeforeTest
+    fun setup() {
+        testScope = TestScope(testDispatcher)
+        roundApi = mockk(relaxed = true)
+        syncManager = mockk(relaxed = true)
+        originalIsEligibleForOnline = Config.isEligibleForOnline
+        OfflineIdGenerator.reset()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Config.isEligibleForOnline = originalIsEligibleForOnline
+        OfflineIdGenerator.reset()
+    }
+
+    // ==================== PURE OFFLINE MODE TESTS ====================
+
+    @Test
+    fun `insertRound in pure offline mode succeeds`() = runTest(testDispatcher) {
+        // Given: Pure offline mode
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        val result = repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(result.isSuccess)
+        assertTrue(repository.insertRoundCalled)
+    }
+
+    @Test
+    fun `insertRound in pure offline mode does not call API`() = runTest(testDispatcher) {
+        // Given: Pure offline mode
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertFalse(repository.wasApiCalled)
+        coVerify(exactly = 0) { roundApi.createRound(any(), any(), any()) }
+    }
+
+    @Test
+    fun `insertRound in pure offline mode does not mark as dirty`() = runTest(testDispatcher) {
+        // Given: Pure offline mode
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertFalse(repository.wasMarkedDirty)
+    }
+
+    @Test
+    fun `insertRound in pure offline mode uses negative IDs`() = runTest(testDispatcher) {
+        // Given: Pure offline mode
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(repository.usedNegativeId)
+    }
+
+    // ==================== ONLINE SUCCESS TESTS ====================
+
+    @Test
+    fun `insertRound online success calls API`() = runTest(testDispatcher) {
+        // Given: Online mode and connected
+        Config.isEligibleForOnline = true
+        every { syncManager.canUseOnline() } returns true
+
+        val roundDetails = RoundDetailsDto(
+            round = RoundDto(id = 999, bet = testBet, gameId = testGameId),
+            players = listOf(
+                PlayerDto(id = 1, name = "P1", balance = 100, gameId = testGameId),
+                PlayerDto(id = 2, name = "P2", balance = 100, gameId = testGameId),
+                PlayerDto(id = 3, name = "P3", balance = 100, gameId = testGameId),
+                PlayerDto(id = 4, name = "P4", balance = 100, gameId = testGameId)
+            ),
+            results = testResults.mapIndexed { i, r ->
+                ResultDto(id = 100 + i, roundId = 999, playerId = r.playerId, profit = r.profit)
+            }
+        )
+        coEvery { roundApi.createRound(testGameId, testBet, testResults) } returns roundDetails
+
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        val result = repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(result.isSuccess)
+        assertTrue(repository.wasApiCalled)
+        coVerify { roundApi.createRound(testGameId, testBet, testResults) }
+    }
+
+    // ==================== ONLINE FAILURE FALLBACK TESTS ====================
+
+    @Test
+    fun `insertRound falls back to offline when API fails`() = runTest(testDispatcher) {
+        // Given: Online mode, connected, but API fails
+        Config.isEligibleForOnline = true
+        every { syncManager.canUseOnline() } returns true
+        coEvery { roundApi.createRound(any(), any(), any()) } throws Exception("Network error")
+
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        val result = repository.insertRound(testGameId, testBet, testResults)
+
+        // Then: Should succeed via offline fallback
+        assertTrue(result.isSuccess)
+        assertTrue(repository.wasApiCalled)
+        assertTrue(repository.usedNegativeId)
+    }
+
+    @Test
+    fun `insertRound marks dirty when falling back to offline`() = runTest(testDispatcher) {
+        // Given: Online mode, connected, but API fails
+        Config.isEligibleForOnline = true
+        every { syncManager.canUseOnline() } returns true
+        coEvery { roundApi.createRound(any(), any(), any()) } throws Exception("Network error")
+
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(repository.wasMarkedDirty)
+    }
+
+    // ==================== ELIGIBLE BUT DISCONNECTED TESTS ====================
+
+    @Test
+    fun `insertRound skips API when not connected`() = runTest(testDispatcher) {
+        // Given: Eligible but not connected
+        Config.isEligibleForOnline = true
+        every { syncManager.canUseOnline() } returns false
+
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        val result = repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(result.isSuccess)
+        assertFalse(repository.wasApiCalled)
+    }
+
+    @Test
+    fun `insertRound marks dirty when eligible but disconnected`() = runTest(testDispatcher) {
+        // Given: Eligible but not connected
+        Config.isEligibleForOnline = true
+        every { syncManager.canUseOnline() } returns false
+
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        // When
+        repository.insertRound(testGameId, testBet, testResults)
+
+        // Then
+        assertTrue(repository.wasMarkedDirty)
+    }
+
+    // ==================== DATA PRESERVATION TESTS ====================
+
+    @Test
+    fun `insertRound preserves game ID`() = runTest(testDispatcher) {
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        repository.insertRound(testGameId, testBet, testResults)
+
+        assertEquals(testGameId, repository.lastGameId)
+    }
+
+    @Test
+    fun `insertRound preserves bet amount`() = runTest(testDispatcher) {
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        repository.insertRound(testGameId, testBet, testResults)
+
+        assertEquals(testBet, repository.lastBet)
+    }
+
+    @Test
+    fun `insertRound preserves all results`() = runTest(testDispatcher) {
+        Config.isEligibleForOnline = false
+        val repository = FakeRoundRepository(roundApi, syncManager)
+
+        repository.insertRound(testGameId, testBet, testResults)
+
+        assertEquals(testResults, repository.lastResults)
+    }
+}

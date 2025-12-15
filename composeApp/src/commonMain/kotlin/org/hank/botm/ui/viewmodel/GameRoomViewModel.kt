@@ -74,9 +74,9 @@ class GameRoomViewModel(
 
     fun startNewGame() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            gameRepository.clearGame()
-            _state.value = _state.value.copy(isLoading = false)
+            // Disconnect from current game updates before navigating
+            gameRepository.disconnectFromGameUpdates()
+            // Navigate to setup - old game data is preserved for potential sync
             _navigateToSetup.send(Unit)
         }
     }

@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
+import kotlin.concurrent.AtomicInt
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.hank.botm.data.database.ALL_MIGRATIONS
 import org.hank.botm.data.database.AppDatabase
@@ -15,6 +16,18 @@ import platform.Foundation.NSUserDomainMask
 import platform.Foundation.timeIntervalSince1970
 
 actual fun currentTimeMillis(): Long = (NSDate().timeIntervalSince1970 * 1000).toLong()
+
+actual object OfflineIdGenerator {
+    private val idCounter = AtomicInt(0)
+
+    actual fun nextId(): Int = idCounter.decrementAndGet()
+
+    actual fun isOfflineId(id: Int): Boolean = id < 0
+
+    actual fun reset() {
+        idCounter.value = 0
+    }
+}
 
 fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
     val dbFilePath = documentDirectory() + "/app_database.db"

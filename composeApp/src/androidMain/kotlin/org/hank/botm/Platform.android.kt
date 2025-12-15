@@ -8,8 +8,21 @@ import io.ktor.client.engine.okhttp.OkHttp
 import org.hank.botm.data.database.ALL_MIGRATIONS
 import org.hank.botm.data.database.AppDatabase
 import org.hank.botm.data.network.applyCommonConfiguration
+import java.util.concurrent.atomic.AtomicInteger
 
 actual fun currentTimeMillis(): Long = System.currentTimeMillis()
+
+actual object OfflineIdGenerator {
+    private val idCounter = AtomicInteger(0)
+
+    actual fun nextId(): Int = idCounter.decrementAndGet()
+
+    actual fun isOfflineId(id: Int): Boolean = id < 0
+
+    actual fun reset() {
+        idCounter.set(0)
+    }
+}
 
 fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     val appContext = context.applicationContext

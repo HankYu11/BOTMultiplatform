@@ -36,27 +36,26 @@ object Config {
  * - Offline IDs: Negative (-1, -2, -3, ...)
  *
  * This ensures offline-created entities never conflict with server entities.
+ *
+ * Note: Uses platform-specific atomic operations for thread safety.
  */
-object OfflineIdGenerator {
-    private var idCounter = 0
-    private val lock = Any()
-
+expect object OfflineIdGenerator {
     /**
      * Generate a unique negative ID for offline entities.
      * Returns negative integers: -1, -2, -3, etc.
-     * Thread-safe using synchronized block.
+     * Thread-safe.
      */
-    fun nextId(): Int = synchronized(lock) { --idCounter }
+    fun nextId(): Int
 
     /**
      * Check if an ID is an offline-generated ID (negative).
      */
-    fun isOfflineId(id: Int): Boolean = id < 0
+    fun isOfflineId(id: Int): Boolean
 
     /**
      * Reset counter (useful for testing).
      */
-    fun reset() = synchronized(lock) { idCounter = 0 }
+    fun reset()
 }
 
 /**
