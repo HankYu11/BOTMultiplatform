@@ -25,27 +25,24 @@ A cross-platform score calculator app for the popular card game Big Old Two, bui
 
 The app uses an offline-first architecture that allows full functionality without network connectivity while seamlessly syncing data when online.
 
-#### ID Strategy
+#### Sync Model: "Sync and Replace"
 
-To avoid conflicts between locally-created and server-created entities:
+The app uses a **server as single source of truth** model:
 
-| ID Type | Range | Description |
-|---------|-------|-------------|
-| Server IDs | Positive (1, 2, 3, ...) | Assigned by the server |
-| Offline IDs | Negative (-1, -2, -3, ...) | Generated locally via `OfflineIdGenerator` |
+- **Offline**: Data is saved locally with Room-generated IDs and marked as `isDirty`
+- **Sync**: Complete game data is uploaded to server, which returns data with server-generated IDs
+- **Replace**: Local data is deleted and replaced with server response
 
-This ensures offline-created games and rounds never conflict with server data during sync.
+This eliminates ID conflicts and keeps the architecture simple.
 
-#### Dual-ID Pattern
-
-Entities use a dual-ID pattern for sync tracking:
+#### Entity Structure
 
 ```kotlin
 data class GameEntity(
-    val id: Int,           // Local primary key (negative if offline-created)
-    val serverId: Int?,    // Server's ID (null until synced)
-    val isDirty: Boolean,  // True if local changes need syncing
-    // ...
+    val id: Int,              // Room auto-generated, becomes server ID after sync
+    val isDirty: Boolean,     // True if local changes need syncing
+    val lastSyncedAt: Long?,  // Timestamp of last successful sync
+    val createdAt: Long,
 )
 ```
 
@@ -88,27 +85,29 @@ data class GameEntity(
 | `true` | `false` | Offline with dirty flag, sync later |
 | `true` | `true` | Online-first with offline fallback |
 
-#### Background Sync
+#### Background Sync (Sync and Replace)
 
-The `SyncManager` handles bidirectional sync:
+The `SyncManager` handles sync with a complete replacement strategy:
 
-1. **Push**: Upload dirty local changes to server
-   - New games (serverId == null)
-   - Modified rounds (isDirty == true)
+1. **Collect**: Gather all local game data (players, rounds, results)
+2. **Upload**: Send complete game to server via `POST /game/sync`
+3. **Replace**: Delete local data, insert server response with server IDs
+4. **Notify**: Emit `gameIdChanged` event if ID changed (for navigation)
 
-2. **Pull**: Download new data from server
-   - New rounds from other devices
-   - Updated player balances
+```kotlin
+// Sync request uses player indices instead of IDs
+data class SyncGameRequest(
+    val players: List<SyncPlayerRequest>,  // [{ name: "Alice" }, ...]
+    val rounds: List<SyncRoundRequest>,    // Results reference playerIndex 0-3
+)
+```
 
 #### Join Game by ID
 
-When joining a game, the app checks multiple sources:
+When joining a game, the app checks:
 
 1. Server (if online) - authoritative source
-2. Local database by `id` - for locally-created games
-3. Local database by `serverId` - for previously-synced games
-
-This allows joining both online and offline-created games.
+2. Local database by `id` - for local or previously-synced games
 
 ### Project Structure
 
